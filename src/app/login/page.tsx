@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase-client';
+import { createSupabaseClient } from '@/lib/supabase-client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -13,13 +13,19 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const router = useRouter();
-  const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setMessage('');
     setLoading(true);
+
+    const supabase = createSupabaseClient();
+    if (!supabase) {
+      setError('登录服务暂未配置，请稍后再试');
+      setLoading(false);
+      return;
+    }
 
     try {
       if (isSignUp) {
@@ -50,6 +56,12 @@ export default function LoginPage() {
   };
 
   const handleOAuth = async (provider: 'google' | 'github') => {
+    const supabase = createSupabaseClient();
+    if (!supabase) {
+      setError('登录服务暂未配置');
+      return;
+    }
+
     await supabase.auth.signInWithOAuth({
       provider,
       options: {

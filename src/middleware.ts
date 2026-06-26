@@ -1,8 +1,8 @@
-import { updateSession } from '@/lib/supabase-server';
-import { type NextRequest } from 'next/server';
+// middleware 简化 - 不使用 Supabase SSR
+import { type NextRequest, NextResponse } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request);
+  return NextResponse.next({ request });
 }
 
 export const config = {
