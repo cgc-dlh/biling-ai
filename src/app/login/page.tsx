@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { createSupabaseClient } from '@/lib/supabase-client';
+import { useState, useEffect } from 'react';
+import { signUp, signIn, getCurrentUser } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -14,38 +14,36 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const router = useRouter();
 
+  // 如果已登录，跳转到首页
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (user) {
+      router.push('/');
+    }
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setMessage('');
     setLoading(true);
 
-    const supabase = createSupabaseClient();
-    if (!supabase) {
-      setError('登录服务暂未配置，请稍后再试');
-      setLoading(false);
-      return;
-    }
-
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-          },
-        });
-        if (error) throw error;
-        setMessage('注册成功！请检查邮箱确认链接。');
+        const result = signUp(email, password);
+        if (!result.success) {
+          setError(result.error || '注册失败');
+        } else {
+          setMessage('注册成功！已自动登录。');
+          setTimeout(() => router.push('/'), 1000);
+        }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        router.push('/');
-        router.refresh();
+        const result = signIn(email, password);
+        if (!result.success) {
+          setError(result.error || '登录失败');
+        } else {
+          router.push('/');
+        }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '操作失败';
@@ -53,21 +51,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleOAuth = async (provider: 'google' | 'github') => {
-    const supabase = createSupabaseClient();
-    if (!supabase) {
-      setError('登录服务暂未配置');
-      return;
-    }
-
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
   };
 
   return (
@@ -121,21 +104,6 @@ export default function LoginPage() {
               {loading ? '处理中...' : isSignUp ? '注册' : '登录'}
             </button>
           </form>
-
-          <div className="mt-4 flex gap-2">
-            <button
-              onClick={() => handleOAuth('google')}
-              className="flex-1 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-            >
-              Google
-            </button>
-            <button
-              onClick={() => handleOAuth('github')}
-              className="flex-1 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-            >
-              GitHub
-            </button>
-          </div>
 
           <p className="mt-4 text-center text-sm text-gray-500">
             {isSignUp ? '已有账号？' : '没有账号？'}
