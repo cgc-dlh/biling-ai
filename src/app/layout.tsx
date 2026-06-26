@@ -21,6 +21,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://golden-gingersnap-790cb7.netlify.app',
   },
+  verification: {
+    // 百度统计验证码 - 替换为你的实际验证码
+    // baidu: 'your-baidu-verify-code',
+    // google: 'your-google-verify-code',
+  },
 };
 
 export const viewport: Viewport = {
@@ -37,6 +42,42 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN">
+      <head>
+        {/* 百度统计 - 替换 BA_ID 为你的实际统计 ID */}
+        {/* <script defer src="https://hm.baidu.com/hm.js?BA_ID_HERE"></script> */}
+
+        {/* Google Analytics - 替换 GA_ID 为你的实际测量 ID (G-XXXXXXX) */}
+        {/* <script async src="https://www.googletagmanager.com/gtag/js?id=GA_ID_HERE"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'GA_ID_HERE');
+            `,
+          }}
+        /> */}
+
+        {/* 百度站长推送 - 替换 TOKEN 为你的实际 token */}
+        {/* <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(){
+                var bp = document.createElement('script');
+                var curProtocol = window.location.protocol.split(':')[0];
+                if (curProtocol === 'https') {
+                  bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+                } else {
+                  bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+                }
+                var s = document.getElementsByTagName("script")[0];
+                s.parentNode.insertBefore(bp, s);
+              })();
+            `,
+          }}
+        /> */}
+      </head>
       <body className="antialiased bg-gray-50 text-gray-900 min-h-screen">
         {children}
       </body>
