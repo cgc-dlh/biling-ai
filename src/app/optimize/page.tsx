@@ -40,6 +40,10 @@ const PLATFORMS = [
   { value: 'zhihu', label: '知乎', icon: '💡' },
   { value: 'toutiao', label: '头条号', icon: '📰' },
   { value: 'baijia', label: '百家号', icon: '📝' },
+  { value: 'douyin', label: '抖音', icon: '🎵' },
+  { value: 'bilibili', label: 'B站', icon: '📺' },
+  { value: 'weibo', label: '微博', icon: '🔥' },
+  { value: 'kuaishou', label: '快手', icon: '⚡' },
 ];
 
 export default function OptimizePage() {

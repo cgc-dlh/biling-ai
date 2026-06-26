@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证 platform 参数是否在允许的枚举范围内
-    const validPlatforms = ['wechat', 'xiaohongshu', 'zhihu', 'toutiao', 'baijia'];
+    const validPlatforms = ['wechat', 'xiaohongshu', 'zhihu', 'toutiao', 'baijia', 'douyin', 'bilibili', 'weibo', 'kuaishou'];
     if (!validPlatforms.includes(platform)) {
       return NextResponse.json(
         { error: `不支持的平台，可选值：${validPlatforms.join('、')}` },
@@ -54,6 +54,10 @@ export async function POST(request: NextRequest) {
       zhihu: { name: 'Zhihu', maxLen: 1500, style: 'deep thinking style, well-reasoned, suitable for knowledge sharing' },
       toutiao: { name: 'Toutiao', maxLen: 1000, style: 'news style, concise and powerful, suitable for quick reading' },
       baijia: { name: 'Baijiahao', maxLen: 1200, style: 'news style, professional but approachable' },
+      douyin: { name: 'Douyin', maxLen: 300, style: 'short video script style, punchy hooks in first 3 seconds, colloquial and energetic, add CTA for likes and follows' },
+      bilibili: { name: 'Bilibili', maxLen: 800, style: 'young anime/game culture style, use bullet comments references, friendly and witty, add video chapter markers' },
+      weibo: { name: 'Weibo', maxLen: 400, style: 'hot topic style, concise and catchy, use hashtags, suitable for viral spread' },
+      kuaishou: { name: 'Kuaishou', maxLen: 300, style: 'down-to-earth authentic style, story-driven, emotional connection, friendly like talking to a buddy' },
     };
 
     const config = platformConfig[platform] || platformConfig.wechat;
