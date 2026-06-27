@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import WelcomeGuide from '@/components/WelcomeGuide';
 
 interface Title {
   title: string;
@@ -115,6 +116,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--ocean-deep) 0%, var(--ocean-mid) 100%)' }}>
+      <WelcomeGuide />
       <Header current="/" />
 
       <main className="max-w-4xl mx-auto px-4 py-8">
