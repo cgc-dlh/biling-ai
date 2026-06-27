@@ -14,12 +14,9 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const router = useRouter();
 
-  // 如果已登录，跳转到首页
   useEffect(() => {
     const user = getCurrentUser();
-    if (user) {
-      router.push('/');
-    }
+    if (user) router.push('/');
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,34 +51,39 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--ocean-deep)' }}>
       <div className="w-full max-w-md mx-4">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 no-underline">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center text-white text-lg font-bold">✏</div>
-            <span className="font-bold text-2xl text-blue-600">笔灵AI</span>
+            <svg width="36" height="36" viewBox="0 0 30 30" fill="none">
+              <circle cx="15" cy="15" r="14" stroke="#2DD4BF" strokeWidth="2" fill="none"/>
+              <path d="M10 20 C8 22, 6 18, 12 14 C14 12, 10 11, 15 6 C9 11, 10 11, 12 14 C8 18, 6 22, 10 20Z" fill="#2DD4BF" fillOpacity="0.6"/>
+              <circle cx="15" cy="10" r="1.5" fill="#F59E0B"/>
+            </svg>
+            <span className="font-bold text-2xl" style={{ color: '#2DD4BF' }}>见鲸</span>
           </Link>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 text-center mb-6">
+        <div className="rounded-2xl p-6" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+          <h2 className="text-xl font-bold text-center mb-6" style={{ color: 'var(--ink)' }}>
             {isSignUp ? '创建账号' : '登录'}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted)' }}>邮箱</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
-                className="w-full p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2.5 rounded-lg text-sm"
+                style={{ background: 'var(--ocean-deep)', border: '1px solid var(--border-subtle)', color: 'var(--ink)', outline: 'none' }}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">密码</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted)' }}>密码</label>
               <input
                 type="password"
                 value={password}
@@ -89,27 +91,30 @@ export default function LoginPage() {
                 placeholder="至少6位"
                 required
                 minLength={6}
-                className="w-full p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2.5 rounded-lg text-sm"
+                style={{ background: 'var(--ocean-deep)', border: '1px solid var(--border-subtle)', color: 'var(--ink)', outline: 'none' }}
               />
             </div>
 
-            {error && <p className="text-sm text-red-500 bg-red-50 px-4 py-2 rounded-lg">{error}</p>}
-            {message && <p className="text-sm text-green-500 bg-green-50 px-4 py-2 rounded-lg">{message}</p>}
+            {error && <p className="text-sm px-4 py-2 rounded-lg" style={{ color: '#EF4444', background: 'rgba(239,68,68,0.1)' }}>{error}</p>}
+            {message && <p className="text-sm px-4 py-2 rounded-lg" style={{ color: '#10B981', background: 'rgba(16,185,129,0.1)' }}>{message}</p>}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 transition-all shadow-sm"
+              className="w-full py-3 text-white font-semibold rounded-xl disabled:opacity-50 transition-all"
+              style={{ background: 'linear-gradient(135deg, #2DD4BF, #0EA5E9)' }}
             >
               {loading ? '处理中...' : isSignUp ? '注册' : '登录'}
             </button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-gray-500">
+          <p className="mt-4 text-center text-sm" style={{ color: 'var(--muted)' }}>
             {isSignUp ? '已有账号？' : '没有账号？'}
             <button
               onClick={() => { setIsSignUp(!isSignUp); setError(''); setMessage(''); }}
-              className="text-blue-600 font-medium ml-1 hover:underline"
+              className="font-medium ml-1 hover:underline"
+              style={{ color: 'var(--teal)' }}
             >
               {isSignUp ? '去登录' : '去注册'}
             </button>

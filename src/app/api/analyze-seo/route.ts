@@ -6,35 +6,49 @@ const openai = new OpenAI({
   baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
 });
 
+// 构建品牌上下文
+function buildBrandContext(brand?: {
+  track?: string;
+  persona?: string;
+  toneTags?: string[];
+  forbiddenWords?: string;
+  sampleTexts?: string[];
+}): string {
+  if (!brand) return '';
+  const parts: string[] = [];
+  if (brand.track) parts.push(`- 赛道领域：${brand.track}`);
+  if (brand.persona) parts.push(`- 人设定位：${brand.persona}`);
+  if (brand.toneTags?.length) parts.push(`- 文风要求：${brand.toneTags.join('、')}`);
+  if (brand.forbiddenWords?.trim()) {
+    const words = brand.forbiddenWords.split('\n').filter(w => w.trim());
+    if (words.length) parts.push(`- 禁用词：${words.join('、')}（请勿在分析建议中出现以上词汇）`);
+  }
+  return parts.length ? `\n\n【内容品牌背景】\n${parts.join('\n')}\n` : '';
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // 检查 API Key 是否已正确配置
     if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-placeholder-key') {
       return NextResponse.json({ error: 'API未配置' }, { status: 500 });
     }
 
-    const { content, keyword = '' } = await request.json();
+    const { content, keyword = '', brand } = await request.json();
 
     if (!content || content.trim().length < 50) {
-      return NextResponse.json(
-        { error: '内容太短，请至少输入50字' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '内容太短，请至少输入50字' }, { status: 400 });
+    }
+    if (content.length > 5000) {
+      return NextResponse.json({ error: '内容过长，请控制在5000字以内' }, { status: 400 });
     }
 
-    // 限制内容长度，防止滥用
-    if (content.length > 5000) {
-      return NextResponse.json(
-        { error: '内容过长，请控制在5000字以内' },
-        { status: 400 }
-      );
-    }
+    const brandCtx = buildBrandContext(brand);
 
     const prompt = `You are a professional SEO analyst. Analyze the following Chinese content and output JSON (no markdown code block).
 
 Content:
 ${content.trim()}
 ${keyword ? `Target keyword: ${keyword}` : ''}
+${brandCtx}
 
 Please output the following JSON structure (in Chinese):
 {
@@ -67,23 +81,20 @@ Output JSON directly, do not wrap in markdown code block.`;
       const result = JSON.parse(cleaned);
       return NextResponse.json(result, { status: 200 });
     } catch {
-      return NextResponse.json(
-        {
-          keywordDensity: '3.0%',
-          keywordDensityScore: 'good',
-          readabilityScore: 80,
-          readabilityLevel: '良好',
-          longTailCoverage: 2,
-          longTailTotal: 5,
-          internalLinks: 1,
-          internalLinksSuggestion: '建议增加2处内链',
-          titleOptimization: '需优化',
-          metaDescription: '建议使用更吸引人的描述',
-          suggestions: ['关键词密度适中', '建议增加长尾关键词', '可读性良好'],
-          overallScore: 75,
-        },
-        { status: 200 }
-      );
+      return NextResponse.json({
+        keywordDensity: '3.0%',
+        keywordDensityScore: 'good',
+        readabilityScore: 80,
+        readabilityLevel: '良好',
+        longTailCoverage: 2,
+        longTailTotal: 5,
+        internalLinks: 1,
+        internalLinksSuggestion: '建议增加2处内链',
+        titleOptimization: '需优化',
+        metaDescription: '建议使用更吸引人的描述',
+        suggestions: ['关键词密度适中', '建议增加长尾关键词', '可读性良好'],
+        overallScore: 75,
+      }, { status: 200 });
     }
   } catch (error: unknown) {
     console.error('SEO analysis error:', error);
