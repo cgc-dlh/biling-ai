@@ -43,8 +43,8 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <head>
-        {/* 百度统计 - 替换 BA_ID 为你的实际统计 ID */}
-        {/* <script defer src="https://hm.baidu.com/hm.js?BA_ID_HERE"></script> */}
+        {/* 百度统计 */}
+        <script defer src="https://hm.baidu.com/hm.js?590aa4ea568b68f10824732190d2c4e1"></script>
 
         {/* Google Analytics - 替换 GA_ID 为你的实际测量 ID (G-XXXXXXX) */}
         {/* <script async src="https://www.googletagmanager.com/gtag/js?id=GA_ID_HERE"></script>
