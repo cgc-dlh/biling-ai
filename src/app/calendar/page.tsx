@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { useRouter } from 'next/navigation';
 
 const CAL_KEY = 'jianjing_calendar_plans';
 
@@ -40,10 +41,22 @@ export default function CalendarPage() {
   const [showAdd, setShowAdd] = useState<number | null>(null);
   const [newTitle, setNewTitle] = useState('');
   const [newPlatform, setNewPlatform] = useState('wechat');
+  const router = useRouter();
 
   useEffect(() => { setPlans(loadPlans()); }, []);
 
   const dateStr = (d: number) => `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+  const handleDayClick = (d: number) => {
+    const dayPlans = plans.filter(p => p.date === dateStr(d));
+    if (dayPlans.length > 0) {
+      // 有发布计划 → 跳到内容优化页
+      router.push('/optimize');
+    } else {
+      // 无计划 → 添加计划
+      setShowAdd(showAdd === d ? null : d);
+    }
+  };
 
   const addPlan = (d: number) => {
     if (!newTitle.trim()) return;
@@ -119,7 +132,7 @@ export default function CalendarPage() {
                     background: isToday ? 'rgba(45,212,191,0.12)' : 'var(--ocean-deep)',
                     border: isToday ? '1px solid var(--teal)' : '1px solid transparent',
                   }}
-                  onClick={() => setShowAdd(showAdd === d ? null : d)}
+                  onClick={() => handleDayClick(d)}
                 >
                   <div className="text-xs font-medium" style={{ color: isToday ? 'var(--teal)' : 'var(--muted)' }}>{d}</div>
                   {hasPlan && (
