@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { signUp, signIn, getCurrentUser } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -14,10 +14,19 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const router = useRouter();
 
+  // 从 URL 中读取邀请码
+  const inviteCode = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    const p = new URLSearchParams(window.location.search);
+    return p.get('invite');
+  }, []);
+
   useEffect(() => {
     const user = getCurrentUser();
     if (user) router.push('/');
-  }, [router]);
+    // 如果有邀请码，自动切到注册模式
+    if (inviteCode) setIsSignUp(true);
+  }, [router, inviteCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,11 +36,11 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        const result = signUp(email, password);
+        const result = signUp(email, password, inviteCode || undefined);
         if (!result.success) {
           setError(result.error || '注册失败');
         } else {
-          setMessage('注册成功！已自动登录。');
+          setMessage(inviteCode ? '注册成功！你已获得 5 次邀请奖励。' : '注册成功！已自动登录。');
           setTimeout(() => router.push('/'), 1000);
         }
       } else {
@@ -65,6 +74,11 @@ export default function LoginPage() {
         </div>
 
         <div className="rounded-2xl p-6" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+          {inviteCode && isSignUp && (
+            <div className="mb-4 p-3 rounded-lg text-sm" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: 'var(--gold)' }}>
+              通过邀请码 <strong>{inviteCode}</strong> 注册，你将获得 5 次额外免费额度。
+            </div>
+          )}
           <h2 className="text-xl font-bold text-center mb-6" style={{ color: 'var(--ink)' }}>
             {isSignUp ? '创建账号' : '登录'}
           </h2>

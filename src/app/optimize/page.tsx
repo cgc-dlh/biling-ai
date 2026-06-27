@@ -257,7 +257,7 @@ export default function OptimizePage() {
               className="mt-4 w-full py-3 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               style={{ background: batchRunning ? 'var(--ocean-surface)' : 'var(--gold)', color: batchRunning ? 'var(--muted)' : '#0A1929' }}
             >
-              {batchRunning ? 'AI正在依次生成各平台...' : `一键生成${batchPlatforms.size}个平台版本`}
+              {batchRunning ? `正在生成... ${batchResults.filter(r => !r.loading).length}/${batchResults.length} 个平台` : `一键生成${batchPlatforms.size}个平台版本`}
             </button>
           ) : (
             <button

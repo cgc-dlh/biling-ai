@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 // 导航菜单配置
 const NAV_ITEMS = [
   { href: '/', label: '标题生成' },
+  { href: '/seo', label: 'SEO分析' },
   { href: '/optimize', label: '内容优化' },
   { href: '/lab', label: '实验室' },
   { href: '/calendar', label: '日历' },
@@ -53,14 +54,11 @@ export default function Header({ current = '/' }: { current?: string }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`px-2 py-1 rounded-lg transition-colors ${
-                current === item.href
-                  ? 'font-semibold'
-                  : ''
-              }`}
+              className="px-2 py-1 rounded-lg transition-colors"
               style={{
                 color: current === item.href ? '#2DD4BF' : 'var(--muted)',
                 background: current === item.href ? 'rgba(45,212,191,0.08)' : 'transparent',
+                fontWeight: current === item.href ? 600 : 400,
               }}
             >
               {item.label}
