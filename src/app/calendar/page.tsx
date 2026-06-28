@@ -171,8 +171,8 @@ export default function CalendarPage() {
                   className="flex-1 p-2 rounded-lg text-sm"
                   style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)', color: 'var(--ink)', outline: 'none' }}
                 >
-                  {['wechat','xiaohongshu','zhihu','toutiao','douyin','bilibili','weibo','kuaishou'].map(v => (
-                    <option key={v} value={v}>{v === 'wechat' ? '公众号' : v === 'xiaohongshu' ? '小红书' : v === 'zhihu' ? '知乎' : v === 'toutiao' ? '头条' : v === 'douyin' ? '抖音' : v === 'bilibili' ? 'B站' : v === 'weibo' ? '微博' : '快手'}</option>
+                  {['wechat','xiaohongshu','zhihu','toutiao','douyin','bilibili','weibo','kuaishou','medium','instagram','linkedin','tiktok','youtube','twitter','reddit','facebook','quora'].map(v => (
+                    <option key={v} value={v}>{v === 'wechat' ? '公众号' : v === 'xiaohongshu' ? '小红书' : v === 'zhihu' ? '知乎' : v === 'toutiao' ? '头条' : v === 'douyin' ? '抖音' : v === 'bilibili' ? 'B站' : v === 'weibo' ? '微博' : v === 'kuaishou' ? '快手' : v}</option>
                   ))}
                 </select>
                 <button

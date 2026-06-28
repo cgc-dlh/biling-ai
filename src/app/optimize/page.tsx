@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { ALL_PLATFORM_OPTIONS } from '@/lib/platforms';
 
 interface ProofreadError {
   type: string;
@@ -37,17 +38,8 @@ interface PlatformResult {
   error?: string;
 }
 
-const PLATFORMS = [
-  { value: 'wechat', label: '公众号' },
-  { value: 'xiaohongshu', label: '小红书' },
-  { value: 'zhihu', label: '知乎' },
-  { value: 'toutiao', label: '头条号' },
-  { value: 'baijia', label: '百家号' },
-  { value: 'douyin', label: '抖音' },
-  { value: 'bilibili', label: 'B站' },
-  { value: 'weibo', label: '微博' },
-  { value: 'kuaishou', label: '快手' },
-];
+const CN_PLATFORMS = ALL_PLATFORM_OPTIONS.filter(p => p.region === 'cn');
+const GLOBAL_PLATFORMS = ALL_PLATFORM_OPTIONS.filter(p => p.region === 'global');
 
 export default function OptimizePage() {
   const [content, setContent] = useState('');
@@ -64,6 +56,9 @@ export default function OptimizePage() {
   const [batchResults, setBatchResults] = useState<PlatformResult[]>([]);
   const [batchActiveTab, setBatchActiveTab] = useState(0);
   const [batchRunning, setBatchRunning] = useState(false);
+  const [platformRegion, setPlatformRegion] = useState<'cn' | 'global'>('cn');
+
+  const activePlatformList = platformRegion === 'cn' ? CN_PLATFORMS : GLOBAL_PLATFORMS;
 
   const toggleBatchPlatform = (v: string) => {
     setBatchPlatforms(prev => {
@@ -73,14 +68,14 @@ export default function OptimizePage() {
     });
   };
 
-  const selectAllPlatforms = () => setBatchPlatforms(new Set(PLATFORMS.map(p => p.value)));
+  const selectAllInRegion = () => {
+    const values = activePlatformList.map(p => p.value);
+    setBatchPlatforms(new Set(values));
+  };
   const deselectAllPlatforms = () => setBatchPlatforms(new Set());
 
   const handleOptimize = async () => {
-    if (content.trim().length < 30) {
-      setError('请至少输入30字的内容');
-      return;
-    }
+    if (content.trim().length < 30) { setError('请至少输入30字的内容'); return; }
     setError('');
     setLoading(true);
     setResult('');
@@ -96,18 +91,11 @@ export default function OptimizePage() {
         body: JSON.stringify({ content: content.trim(), platform, action, brand }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || '处理失败');
-      } else if (action === 'adapt') {
-        setResult(data.content);
-      } else {
-        setProofreadResult(data);
-      }
-    } catch {
-      setError('网络错误，请重试');
-    } finally {
-      setLoading(false);
-    }
+      if (!res.ok) { setError(data.error || '处理失败'); }
+      else if (action === 'adapt') { setResult(data.content); }
+      else { setProofreadResult(data); }
+    } catch { setError('网络错误，请重试'); }
+    finally { setLoading(false); }
   };
 
   const handleBatchGenerate = async () => {
@@ -119,14 +107,13 @@ export default function OptimizePage() {
     let brand = undefined;
     try { brand = JSON.parse(localStorage.getItem('jianjing_brand_profile') || 'null'); } catch { /* ignore */ }
 
-    const selected = PLATFORMS.filter(p => batchPlatforms.has(p.value));
+    const selected = ALL_PLATFORM_OPTIONS.filter(p => batchPlatforms.has(p.value));
     const initial: PlatformResult[] = selected.map(s => ({
       platform: s.value, label: s.label, content: '', loading: true,
     }));
     setBatchResults(initial);
     setBatchActiveTab(0);
 
-    // 依次调用，避免 rate limit
     for (let i = 0; i < selected.length; i++) {
       try {
         const res = await fetch('/api/optimize-content', {
@@ -166,8 +153,8 @@ export default function OptimizePage() {
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold mb-2" style={{ color: 'var(--ink)' }}>内容优化 & 审校</h1>
-          <p style={{ color: 'var(--muted)' }}>多平台一键适配，AI智能审校，确保内容质量</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold mb-2" style={{ color: 'var(--ink)' }}>Content Optimizer</h1>
+          <p style={{ color: 'var(--muted)' }}>One post → 17 platforms. AI auto-detects language and style</p>
         </div>
 
         <div className="rounded-2xl p-6 mb-6" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
@@ -184,41 +171,91 @@ export default function OptimizePage() {
                   border: '1px solid var(--border-subtle)',
                 }}
               >
-                {a === 'adapt' ? '单平台适配' : a === 'proofread' ? '智能审校' : '一键全平台'}
+                {a === 'adapt' ? 'Single Platform' : a === 'proofread' ? 'Proofread' : 'Batch All'}
               </button>
             ))}
           </div>
 
           {/* Platform selector for adapt */}
           {action === 'adapt' && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {PLATFORMS.map((p) => (
+            <div className="mb-4">
+              <div className="flex gap-2 mb-2">
                 <button
-                  key={p.value}
-                  onClick={() => setPlatform(p.value)}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+                  onClick={() => { setPlatformRegion('cn'); setPlatform(CN_PLATFORMS[0].value); }}
+                  className="px-3 py-1 rounded-lg text-xs font-medium transition-all"
                   style={{
-                    background: platform === p.value ? 'rgba(45,212,191,0.12)' : 'var(--ocean-deep)',
-                    color: platform === p.value ? 'var(--teal)' : 'var(--muted)',
-                    border: `1px solid ${platform === p.value ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                    background: platformRegion === 'cn' ? 'rgba(45,212,191,0.12)' : 'var(--ocean-deep)',
+                    color: platformRegion === 'cn' ? 'var(--teal)' : 'var(--muted)',
+                    border: `1px solid ${platformRegion === 'cn' ? 'var(--teal)' : 'var(--border-subtle)'}`,
                   }}
                 >
-                  {p.label}
+                  中国市场
                 </button>
-              ))}
+                <button
+                  onClick={() => { setPlatformRegion('global'); setPlatform(GLOBAL_PLATFORMS[0].value); }}
+                  className="px-3 py-1 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: platformRegion === 'global' ? 'rgba(45,212,191,0.12)' : 'var(--ocean-deep)',
+                    color: platformRegion === 'global' ? 'var(--teal)' : 'var(--muted)',
+                    border: `1px solid ${platformRegion === 'global' ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                  }}
+                >
+                  Global
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {activePlatformList.map((p) => (
+                  <button
+                    key={p.value}
+                    onClick={() => setPlatform(p.value)}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+                    style={{
+                      background: platform === p.value ? 'rgba(45,212,191,0.12)' : 'var(--ocean-deep)',
+                      color: platform === p.value ? 'var(--teal)' : 'var(--muted)',
+                      border: `1px solid ${platform === p.value ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                    }}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
           {/* Platform checkboxes for batch */}
           {action === 'batch' && (
             <div className="mb-4">
+              <div className="flex gap-2 mb-2">
+                <button
+                  onClick={() => setPlatformRegion('cn')}
+                  className="px-3 py-1 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: platformRegion === 'cn' ? 'rgba(45,212,191,0.12)' : 'var(--ocean-deep)',
+                    color: platformRegion === 'cn' ? 'var(--teal)' : 'var(--muted)',
+                    border: `1px solid ${platformRegion === 'cn' ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                  }}
+                >
+                  中国市场 (9)
+                </button>
+                <button
+                  onClick={() => setPlatformRegion('global')}
+                  className="px-3 py-1 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: platformRegion === 'global' ? 'rgba(45,212,191,0.12)' : 'var(--ocean-deep)',
+                    color: platformRegion === 'global' ? 'var(--teal)' : 'var(--muted)',
+                    border: `1px solid ${platformRegion === 'global' ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                  }}
+                >
+                  Global (9)
+                </button>
+              </div>
               <div className="flex items-center gap-2 mb-2">
-                <button onClick={selectAllPlatforms} className="text-xs px-2 py-1 rounded" style={{ color: 'var(--teal)', border: '1px solid var(--border-subtle)' }}>全选</button>
-                <button onClick={deselectAllPlatforms} className="text-xs px-2 py-1 rounded" style={{ color: 'var(--muted)', border: '1px solid var(--border-subtle)' }}>取消</button>
-                <span className="text-xs" style={{ color: 'var(--muted)' }}>已选 {batchPlatforms.size}/{PLATFORMS.length} 个平台</span>
+                <button onClick={selectAllInRegion} className="text-xs px-2 py-1 rounded" style={{ color: 'var(--teal)', border: '1px solid var(--border-subtle)' }}>Select All</button>
+                <button onClick={deselectAllPlatforms} className="text-xs px-2 py-1 rounded" style={{ color: 'var(--muted)', border: '1px solid var(--border-subtle)' }}>Clear</button>
+                <span className="text-xs" style={{ color: 'var(--muted)' }}>{batchPlatforms.size}/{ALL_PLATFORM_OPTIONS.length} selected</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {PLATFORMS.map(p => {
+                {activePlatformList.map(p => {
                   const sel = batchPlatforms.has(p.value);
                   return (
                     <button
@@ -240,12 +277,12 @@ export default function OptimizePage() {
           )}
 
           <label className="text-sm font-semibold block mb-2" style={{ color: 'var(--ink)' }}>
-            {action === 'proofread' ? '粘贴需要审校的内容' : '粘贴原始内容'}
+            {action === 'proofread' ? 'Paste content to proofread' : 'Paste original content'}
           </label>
           <textarea
             value={content}
             onChange={(e) => { setContent(e.target.value); setError(''); }}
-            placeholder={action === 'batch' ? '粘贴一篇内容，一键生成多平台版本...' : action === 'adapt' ? '粘贴原文，AI将自动适配为目标平台格式...' : '粘贴需要审校的内容，AI将检测错别字、语法错误...'}
+            placeholder={action === 'batch' ? 'Paste one post → generate for N platforms (CN or Global)...' : action === 'adapt' ? 'Paste your content. AI auto-detects language and adapts...' : 'Paste content to proofread...'}
             className="w-full h-40 p-4 rounded-xl resize-none text-base"
             style={{ background: 'var(--ocean-deep)', border: '1px solid var(--border-subtle)', color: 'var(--ink)', outline: 'none' }}
           />
@@ -257,7 +294,7 @@ export default function OptimizePage() {
               className="mt-4 w-full py-3 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               style={{ background: batchRunning ? 'var(--ocean-surface)' : 'var(--gold)', color: batchRunning ? 'var(--muted)' : '#0A1929' }}
             >
-              {batchRunning ? `正在生成... ${batchResults.filter(r => !r.loading).length}/${batchResults.length} 个平台` : `一键生成${batchPlatforms.size}个平台版本`}
+              {batchRunning ? `Generating... ${batchResults.filter(r => !r.loading).length}/${batchResults.length} platforms` : `Generate for ${batchPlatforms.size} platforms`}
             </button>
           ) : (
             <button
@@ -266,7 +303,7 @@ export default function OptimizePage() {
               className="mt-4 w-full py-3 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               style={{ background: action === 'adapt' ? 'var(--teal)' : '#8B5CF6' }}
             >
-              {loading ? 'AI处理中...' : action === 'adapt' ? '开始适配' : '开始审校'}
+              {loading ? 'Processing...' : action === 'adapt' ? 'Optimize' : 'Proofread'}
             </button>
           )}
           {error && <p className="mt-3 text-sm px-4 py-2 rounded-lg" style={{ color: '#EF4444', background: 'rgba(239,68,68,0.1)' }}>{error}</p>}
@@ -276,81 +313,47 @@ export default function OptimizePage() {
         {result && action === 'adapt' && (
           <div className="rounded-2xl p-6" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold" style={{ color: 'var(--ink)' }}>适配结果</h3>
-              <button
-                onClick={() => handleCopy(result)}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors"
-                style={{ borderColor: 'var(--border-subtle)', color: 'var(--teal)' }}
-              >
-                {copied ? '已复制' : '复制内容'}
-              </button>
+              <h3 className="font-bold" style={{ color: 'var(--ink)' }}>Result</h3>
+              <button onClick={() => handleCopy(result)} className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors" style={{ borderColor: 'var(--border-subtle)', color: 'var(--teal)' }}>{copied ? 'Copied' : 'Copy'}</button>
             </div>
-            <div className="rounded-xl p-4 whitespace-pre-wrap leading-relaxed text-sm" style={{ background: 'var(--ocean-deep)', color: 'var(--ink)' }}>
-              {result}
-            </div>
+            <div className="rounded-xl p-4 whitespace-pre-wrap leading-relaxed text-sm" style={{ background: 'var(--ocean-deep)', color: 'var(--ink)' }}>{result}</div>
           </div>
         )}
 
         {/* Batch results */}
         {batchResults.length > 0 && action === 'batch' && (
           <div className="rounded-2xl p-6" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="font-bold mb-3" style={{ color: 'var(--ink)' }}>全平台生成结果</h3>
-            {/* Tabs */}
+            <h3 className="font-bold mb-3" style={{ color: 'var(--ink)' }}>Results</h3>
             <div className="flex flex-wrap gap-1 mb-4">
               {batchResults.map((r, i) => (
-                <button
-                  key={r.platform}
-                  onClick={() => setBatchActiveTab(i)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1"
-                  style={{
-                    background: batchActiveTab === i ? 'rgba(45,212,191,0.12)' : 'var(--ocean-deep)',
-                    color: batchActiveTab === i ? 'var(--teal)' : 'var(--muted)',
-                    border: `1px solid ${batchActiveTab === i ? 'var(--teal)' : 'var(--border-subtle)'}`,
-                  }}
-                >
+                <button key={r.platform} onClick={() => setBatchActiveTab(i)} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1" style={{ background: batchActiveTab === i ? 'rgba(45,212,191,0.12)' : 'var(--ocean-deep)', color: batchActiveTab === i ? 'var(--teal)' : 'var(--muted)', border: `1px solid ${batchActiveTab === i ? 'var(--teal)' : 'var(--border-subtle)'}` }}>
                   {r.loading ? '⏳' : r.error ? '❌' : '✅'} {r.label}
                 </button>
               ))}
             </div>
-            {/* Active tab content */}
             {batchResults[batchActiveTab] && (
               <div>
-                {batchResults[batchActiveTab].loading ? (
-                  <div className="text-center py-8" style={{ color: 'var(--muted)' }}>正在生成中...</div>
-                ) : batchResults[batchActiveTab].error ? (
-                  <div className="text-center py-4" style={{ color: '#EF4444' }}>{batchResults[batchActiveTab].error}</div>
-                ) : (
-                  <>
-                    <div className="rounded-xl p-4 whitespace-pre-wrap leading-relaxed text-sm mb-3" style={{ background: 'var(--ocean-deep)', color: 'var(--ink)' }}>
-                      {batchResults[batchActiveTab].content}
-                    </div>
-                    <button
-                      onClick={() => handleCopy(batchResults[batchActiveTab].content)}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors"
-                      style={{ borderColor: 'var(--border-subtle)', color: 'var(--teal)' }}
-                    >
-                      复制当前平台内容
-                    </button>
-                  </>
-                )}
+                {batchResults[batchActiveTab].loading ? <div className="text-center py-8" style={{ color: 'var(--muted)' }}>Generating...</div>
+                : batchResults[batchActiveTab].error ? <div className="text-center py-4" style={{ color: '#EF4444' }}>{batchResults[batchActiveTab].error}</div>
+                : (<>
+                  <div className="rounded-xl p-4 whitespace-pre-wrap leading-relaxed text-sm mb-3" style={{ background: 'var(--ocean-deep)', color: 'var(--ink)' }}>{batchResults[batchActiveTab].content}</div>
+                  <button onClick={() => handleCopy(batchResults[batchActiveTab].content)} className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors" style={{ borderColor: 'var(--border-subtle)', color: 'var(--teal)' }}>Copy</button>
+                </>)}
               </div>
             )}
           </div>
         )}
 
-        {/* Proofread result */}
+        {/* Proofread */}
         {proofreadResult && action === 'proofread' && (
           <div className="space-y-4">
             <div className="rounded-2xl p-6 text-center" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }}>
               <span className="text-4xl font-extrabold" style={{ color: '#8B5CF6' }}>{proofreadResult.overallRating}</span>
-              <div className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
-                {proofreadResult.stats?.totalChars || 0}字 · {proofreadResult.stats?.errorCount || 0}个错误 · {proofreadResult.stats?.warningCount || 0}个警告
-              </div>
+              <div className="text-sm mt-1" style={{ color: 'var(--muted)' }}>{proofreadResult.stats?.totalChars || 0} chars · {proofreadResult.stats?.errorCount || 0} errors · {proofreadResult.stats?.warningCount || 0} warnings</div>
             </div>
-
             {proofreadResult.errors?.length > 0 && (
               <div className="rounded-2xl p-6" style={{ background: 'var(--ocean-surface)', border: '1px solid rgba(239,68,68,0.3)' }}>
-                <h3 className="font-bold mb-3" style={{ color: '#EF4444' }}>发现 {proofreadResult.errors.length} 个错误</h3>
+                <h3 className="font-bold mb-3" style={{ color: '#EF4444' }}>{proofreadResult.errors.length} errors</h3>
                 {proofreadResult.errors.map((err, i) => (
                   <div key={i} className="flex items-start gap-3 py-2 text-sm" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <span className="font-medium whitespace-nowrap" style={{ color: '#EF4444' }}>{err.type}</span>
@@ -362,10 +365,9 @@ export default function OptimizePage() {
                 ))}
               </div>
             )}
-
             {proofreadResult.warnings?.length > 0 && (
               <div className="rounded-2xl p-6" style={{ background: 'var(--ocean-surface)', border: '1px solid rgba(245,158,11,0.3)' }}>
-                <h3 className="font-bold mb-3" style={{ color: 'var(--gold)' }}>{proofreadResult.warnings.length} 个提醒</h3>
+                <h3 className="font-bold mb-3" style={{ color: 'var(--gold)' }}>{proofreadResult.warnings.length} warnings</h3>
                 {proofreadResult.warnings.map((w, i) => (
                   <div key={i} className="flex items-center gap-2 py-1.5 text-sm" style={{ color: 'var(--ink)' }}>
                     <span style={{ color: 'var(--gold)' }}>▸</span>
