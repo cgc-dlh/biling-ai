@@ -10,6 +10,3 @@
 
 [functions]
   node_bundler = "esbuild"
-
-[functions."*"]
-  external_node_modules = ["openai"]
