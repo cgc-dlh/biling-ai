@@ -153,13 +153,24 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(NOW.getMonth());
   const [plans, setPlans] = useState<Plan[]>([]);
   const [showAdd, setShowAdd] = useState<number | null>(null);
+  const [showDayDetail, setShowDayDetail] = useState<number | null>(null);
   const [showAdvice, setShowAdvice] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newPlatform, setNewPlatform] = useState('wechat');
   const [newContentType, setNewContentType] = useState('article');
   const router = useRouter();
 
   useEffect(() => { setPlans(loadPlans()); }, []);
+
+  // 关闭弹窗时重置表单
+  useEffect(() => {
+    if (showAdd === null && showDayDetail === null) {
+      setNewTitle('');
+      setNewPlatform('wechat');
+      setNewContentType('article');
+    }
+  }, [showAdd, showDayDetail]);
 
   const dateStr = (d: number) => `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
@@ -174,9 +185,11 @@ export default function CalendarPage() {
   const handleDayClick = (d: number) => {
     const dayPlans = plans.filter(p => p.date === dateStr(d));
     if (dayPlans.length > 0) {
-      router.push('/optimize');
+      setShowDayDetail(showDayDetail === d ? null : d);
+      setShowAdd(null);
     } else {
       setShowAdd(showAdd === d ? null : d);
+      setShowDayDetail(null);
     }
   };
 
@@ -300,7 +313,31 @@ export default function CalendarPage() {
                 })}
               </div>
 
-              {/* 快速添加 */}
+              {/* 日期详情 / 快速添加 */}
+              {showDayDetail !== null && (
+                <div className="mt-4 p-4 rounded-xl" style={{ background: 'var(--ocean-deep)', border: '1px solid var(--border-subtle)' }}>
+                  <p className="text-sm font-semibold mb-2" style={{ color: 'var(--ink)' }}>
+                    {month + 1}月{showDayDetail}日 · 共 {plans.filter(p => p.date === dateStr(showDayDetail)).length} 个计划
+                  </p>
+                  <div className="space-y-2 mb-3">
+                    {plans.filter(p => p.date === dateStr(showDayDetail)).map((p, i) => {
+                      const idx = plans.findIndex(x => x === p);
+                      return (
+                        <div key={i} className="flex items-center gap-2 p-2 rounded-lg text-sm" style={{ background: 'var(--ocean-surface)' }}>
+                          <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(45,212,191,0.1)', color: 'var(--teal)' }}>{PLATFORM_MAP[p.platform] || p.platform}</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(139,92,246,0.1)', color: '#8B5CF6' }}>{CONTENT_TYPE_MAP[p.content_type || 'article'] || p.content_type}</span>
+                          <span className="flex-1 truncate" style={{ color: 'var(--ink)' }}>{p.title}</span>
+                          <button onClick={() => toggleStatus(idx)} className="text-xs px-1.5 rounded" style={{ color: p.status === 'done' ? '#10B981' : 'var(--gold)', border: '1px solid var(--border-subtle)' }}>
+                            {p.status === 'done' ? '✓' : '○'}
+                          </button>
+                          <button onClick={() => deletePlan(idx)} className="text-xs" style={{ color: '#EF4444' }}>删除</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <button onClick={() => setShowDayDetail(null)} className="px-4 py-2 rounded-lg text-sm" style={{ color: 'var(--muted)', background: 'transparent' }}>关闭</button>
+                </div>
+              )}
               {showAdd !== null && (
                 <div className="mt-4 p-4 rounded-xl" style={{ background: 'var(--ocean-deep)', border: '1px solid var(--border-subtle)' }}>
                   <p className="text-sm font-semibold mb-2" style={{ color: 'var(--ink)' }}>
@@ -371,7 +408,7 @@ export default function CalendarPage() {
             </div>
           </div>
 
-          {/* 右侧：AI 发布建议 */}
+          {/* 右侧：AI 发布建议 + 统计 */}
           <div>
             <button
               onClick={() => setShowAdvice(!showAdvice)}
@@ -388,6 +425,104 @@ export default function CalendarPage() {
               </div>
               <p className="text-xs" style={{ color: 'var(--muted)' }}>{showAdvice ? '点击收起' : '点击展开最佳发布策略'}</p>
             </button>
+
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className="w-full p-4 rounded-2xl text-left transition-all mb-4"
+              style={{
+                background: showStats ? 'var(--ocean-surface)' : 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(45,212,191,0.1))',
+                border: '1px solid #8B5CF6',
+                boxShadow: '0 0 20px rgba(139,92,246,0.1)'
+              }}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xl">📊</span>
+                <h3 className="font-bold" style={{ color: 'var(--ink)' }}>发布统计</h3>
+              </div>
+              <p className="text-xs" style={{ color: 'var(--muted)' }}>{showStats ? '点击收起' : `本月 ${monthPlanCount} 篇 · 点击查看详情`}</p>
+            </button>
+
+            {showStats && (
+              <div className="space-y-4 mb-4">
+                {/* 平台统计 */}
+                <div className="rounded-xl p-4" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }}>
+                  <h4 className="text-sm font-bold mb-3" style={{ color: 'var(--ink)' }}>📱 各平台发布量</h4>
+                  {(() => {
+                    const platformCounts: Record<string, number> = {};
+                    plans.forEach(p => {
+                      const key = PLATFORM_MAP[p.platform] || p.platform;
+                      platformCounts[key] = (platformCounts[key] || 0) + 1;
+                    });
+                    const sorted = Object.entries(platformCounts).sort((a, b) => b[1] - a[1]);
+                    if (sorted.length === 0) {
+                      return <p className="text-xs" style={{ color: 'var(--muted)' }}>暂无数据</p>;
+                    }
+                    const max = sorted[0][1];
+                    return (
+                      <div className="space-y-2">
+                        {sorted.map(([name, count]) => (
+                          <div key={name}>
+                            <div className="flex justify-between text-xs mb-1">
+                              <span style={{ color: 'var(--ink)' }}>{name}</span>
+                              <span style={{ color: 'var(--muted)' }}>{count} 篇</span>
+                            </div>
+                            <div className="h-2 rounded-full" style={{ background: 'var(--ocean-deep)' }}>
+                              <div className="h-2 rounded-full transition-all" style={{ width: `${(count / max) * 100}%`, background: 'linear-gradient(90deg, #2DD4BF, #8B5CF6)' }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* 内容类型统计 */}
+                <div className="rounded-xl p-4" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }}>
+                  <h4 className="text-sm font-bold mb-3" style={{ color: 'var(--ink)' }}>📝 内容类型分布</h4>
+                  {(() => {
+                    const typeCounts: Record<string, number> = {};
+                    plans.forEach(p => {
+                      const key = CONTENT_TYPE_MAP[p.content_type || 'article'] || p.content_type || '文章';
+                      typeCounts[key] = (typeCounts[key] || 0) + 1;
+                    });
+                    const sorted = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]);
+                    if (sorted.length === 0) {
+                      return <p className="text-xs" style={{ color: 'var(--muted)' }}>暂无数据</p>;
+                    }
+                    return (
+                      <div className="flex flex-wrap gap-2">
+                        {sorted.map(([name, count]) => (
+                          <span key={name} className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(45,212,191,0.1)', color: 'var(--teal)', border: '1px solid rgba(45,212,191,0.2)' }}>
+                            {name} · {count}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* 完成率 */}
+                <div className="rounded-xl p-4" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }}>
+                  <h4 className="text-sm font-bold mb-2" style={{ color: 'var(--ink)' }}>✅ 完成率</h4>
+                  {(() => {
+                    const total = plans.length;
+                    const done = plans.filter(p => p.status === 'done').length;
+                    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                    return (
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span style={{ color: 'var(--muted)' }}>{done} / {total} 已完成</span>
+                          <span style={{ color: 'var(--teal)' }}>{pct}%</span>
+                        </div>
+                        <div className="h-2 rounded-full" style={{ background: 'var(--ocean-deep)' }}>
+                          <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #10B981, #2DD4BF)' }} />
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
 
             {showAdvice && (
               <div className="space-y-4">
@@ -488,6 +623,27 @@ export default function CalendarPage() {
                       ✍️ 去写今天的稿子
                     </button>
                   </div>
+                </div>
+
+                {/* 数据导出 */}
+                <div className="mt-6 space-y-2">
+                  <button
+                    onClick={() => {
+                      const dataStr = JSON.stringify(plans, null, 2);
+                      const blob = new Blob([dataStr], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `jianjing-calendar-${year}-${String(month+1).padStart(2,'0')}.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="w-full px-3 py-2 rounded-lg text-xs font-medium"
+                    style={{ background: 'rgba(45,212,191,0.08)', color: 'var(--teal)', border: '1px solid rgba(45,212,191,0.3)' }}
+                  >
+                    📥 导出本月计划 (JSON)
+                  </button>
+                  <p className="text-xs text-center" style={{ color: 'var(--muted)' }}>数据来源：见鲸用户匿名共享 · 实时更新</p>
                 </div>
               </div>
             )}
