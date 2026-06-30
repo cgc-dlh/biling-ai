@@ -1,0 +1,16 @@
+/* 浏览器插件图标（使用 SVG 转 PNG） */
+/* 这里用 CSS 生成一个简单的图标 */
+.icon-container {
+  width: 128px;
+  height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 24px;
+}
+
+.icon-container svg {
+  width: 80px;
+  height: 80px;
+}
