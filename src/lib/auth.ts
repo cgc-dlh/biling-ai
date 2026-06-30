@@ -1,7 +1,7 @@
 // Supabase 认证系统 - 对接云端
 // 替换原有的 localStorage 认证
 
-import { supabase } from './supabase';
+import { getSupabase } from './supabase';
 import type { User } from '@supabase/supabase-js';
 
 export interface LocalUser {
@@ -12,9 +12,10 @@ export interface LocalUser {
 }
 
 export async function getCurrentUser(): Promise<LocalUser | null> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const s = await getSupabase();
+  const { data: { session } } = await s.auth.getSession();
   if (!session?.user) return null;
-  
+
   return {
     email: session.user.email || '',
     userId: session.user.id,
@@ -36,7 +37,8 @@ function addRewardCredits(amount: number) {
 }
 
 export async function signUp(email: string, password: string, inviteCode?: string) {
-  const { data, error } = await supabase.auth.signUp({
+  const s = await getSupabase();
+  const { data, error } = await s.auth.signUp({
     email,
     password,
     options: {
@@ -50,22 +52,22 @@ export async function signUp(email: string, password: string, inviteCode?: strin
   if (!data.user) return { success: false, error: '注册失败' };
 
   // 创建 profile 记录
-  await supabase.from('profiles').insert({
+  await s.from('profiles').insert({
     id: data.user.id,
     email,
   });
 
   // 创建 usage_stats 记录
-  await supabase.from('usage_stats').insert({
+  await s.from('usage_stats').insert({
     user_id: data.user.id,
   });
 
   // 处理邀请奖励
   if (inviteCode) {
     addRewardCredits(5);
-    
+
     // 记录邀请
-    await supabase.from('invitations').insert({
+    await s.from('invitations').insert({
       invitee_email: email,
       invite_code: inviteCode,
     });
@@ -75,7 +77,8 @@ export async function signUp(email: string, password: string, inviteCode?: strin
 }
 
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const s = await getSupabase();
+  const { data, error } = await s.auth.signInWithPassword({
     email,
     password,
   });
@@ -87,7 +90,8 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signOut() {
-  await supabase.auth.signOut();
+  const s = await getSupabase();
+  await s.auth.signOut();
   localStorage.removeItem('jianjing_user');
 }
 

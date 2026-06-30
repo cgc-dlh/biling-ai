@@ -1,5 +1,5 @@
 // 收藏标题云端同步 - 对接 Supabase saved_titles 表
-import { supabase } from './supabase';
+import { getSupabase } from './supabase';
 
 export interface SavedTitle {
   title: string;
@@ -9,7 +9,8 @@ export interface SavedTitle {
 
 // 从云端加载收藏标题
 export async function loadSavedTitles(userId: string): Promise<SavedTitle[]> {
-  const { data, error } = await supabase
+  const s = await getSupabase();
+  const { data, error } = await s
     .from('saved_titles')
     .select('*')
     .eq('user_id', userId)
@@ -26,7 +27,8 @@ export async function loadSavedTitles(userId: string): Promise<SavedTitle[]> {
 
 // 保存到云端
 export async function saveTitle(userId: string, title: string, score: number, platform: string) {
-  const { error } = await supabase
+  const s = await getSupabase();
+  const { error } = await s
     .from('saved_titles')
     .insert({ user_id: userId, title, score, platform });
 
@@ -35,7 +37,8 @@ export async function saveTitle(userId: string, title: string, score: number, pl
 
 // 删除收藏
 export async function deleteTitle(userId: string, id: number) {
-  const { error } = await supabase
+  const s = await getSupabase();
+  const { error } = await s
     .from('saved_titles')
     .delete()
     .eq('id', id)

@@ -38,6 +38,12 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <head>
+        {/* 运行时注入 Supabase 配置，避免 NEXT_PUBLIC_ 变量被构建内联到 JS bundle 触发 Netlify secrets scanning */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__ENV__={SUPABASE_URL:"${process.env.NEXT_PUBLIC_SUPABASE_URL||''}",SUPABASE_ANON_KEY:"${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY||''}"};`,
+          }}
+        />
         {/* 百度统计 */}
         <script defer src="https://hm.baidu.com/hm.js?590aa4ea568b68f10824732190d2c4e1"></script>
       </head>

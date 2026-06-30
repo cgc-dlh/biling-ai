@@ -1,5 +1,5 @@
 // 品牌分身云端同步 - 对接 Supabase profiles 表
-import { supabase } from './supabase';
+import { getSupabase } from './supabase';
 
 export interface BrandProfile {
   track: string;
@@ -11,7 +11,8 @@ export interface BrandProfile {
 
 // 从云端加载品牌分身
 export async function loadBrandProfile(userId: string): Promise<BrandProfile | null> {
-  const { data, error } = await supabase
+  const s = await getSupabase();
+  const { data, error } = await s
     .from('profiles')
     .select('*')
     .eq('id', userId)
@@ -30,7 +31,8 @@ export async function loadBrandProfile(userId: string): Promise<BrandProfile | n
 
 // 保存到云端
 export async function saveBrandProfile(userId: string, profile: BrandProfile) {
-  const { error } = await supabase
+  const s = await getSupabase();
+  const { error } = await s
     .from('profiles')
     .upsert({
       id: userId,
