@@ -1,8 +1,4 @@
-// Supabase 认证系统 - 对接云端
-// 替换原有的 localStorage 认证
-
-import { getSupabase } from './supabase';
-import type { User } from '@supabase/supabase-js';
+// 纯 localStorage 认证系统 — 确保国内用户无需 VPN 即可使用
 
 export interface LocalUser {
   email: string;
@@ -11,21 +7,61 @@ export interface LocalUser {
   inviteCode?: string;
 }
 
-export async function getCurrentUser(): Promise<LocalUser | null> {
-  const s = await getSupabase();
-  const { data: { session } } = await s.auth.getSession();
-  if (!session?.user) return null;
+interface StoredUser {
+  email: string;
+  passwordHash: string;
+  userId: string;
+  createdAt: string;
+  inviteCode?: string;
+}
 
-  return {
-    email: session.user.email || '',
-    userId: session.user.id,
-    createdAt: session.user.created_at || new Date().toISOString(),
-  };
+const AUTH_KEY = 'jianjing_auth_user';
+const USER_DB_KEY = 'jianjing_user_db';
+const INVITE_REWARDS_KEY = 'jianjing_invite_rewards';
+
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function simpleHash(password: string): string {
+  let hash = 0;
+  for (let i = 0; i < password.length; i++) {
+    const char = password.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash.toString(16);
+}
+
+function getUserDB(): StoredUser[] {
+  try {
+    return JSON.parse(localStorage.getItem(USER_DB_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveUserDB(users: StoredUser[]) {
+  localStorage.setItem(USER_DB_KEY, JSON.stringify(users));
+}
+
+export function getCurrentUser(): LocalUser | null {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as LocalUser;
+  } catch {
+    return null;
+  }
 }
 
 export function getRewardCredits(): number {
   try {
-    return parseInt(localStorage.getItem('jianjing_invite_rewards') || '0', 10);
+    return parseInt(localStorage.getItem(INVITE_REWARDS_KEY) || '0', 10);
   } catch {
     return 0;
   }
@@ -33,72 +69,78 @@ export function getRewardCredits(): number {
 
 function addRewardCredits(amount: number) {
   const cur = getRewardCredits();
-  localStorage.setItem('jianjing_invite_rewards', String(cur + amount));
+  localStorage.setItem(INVITE_REWARDS_KEY, String(cur + amount));
 }
 
-export async function signUp(email: string, password: string, inviteCode?: string) {
-  const s = await getSupabase();
-  const { data, error } = await s.auth.signUp({
+export async function signUp(
+  email: string,
+  password: string,
+  inviteCode?: string
+): Promise<{ success: boolean; error?: string }> {
+  const users = getUserDB();
+  if (users.some((u) => u.email === email)) {
+    return { success: false, error: '该邮箱已注册' };
+  }
+
+  const user: StoredUser = {
     email,
-    password,
-    options: {
-      data: {
-        inviteCode: inviteCode || null,
-      }
-    }
-  });
+    passwordHash: simpleHash(password),
+    userId: generateUUID(),
+    createdAt: new Date().toISOString(),
+    inviteCode: inviteCode || undefined,
+  };
 
-  if (error) return { success: false, error: error.message };
-  if (!data.user) return { success: false, error: '注册失败' };
+  users.push(user);
+  saveUserDB(users);
 
-  // 创建 profile 记录
-  await s.from('profiles').insert({
-    id: data.user.id,
-    email,
-  });
-
-  // 创建 usage_stats 记录
-  await s.from('usage_stats').insert({
-    user_id: data.user.id,
-  });
+  // 自动登录
+  const localUser: LocalUser = {
+    email: user.email,
+    userId: user.userId,
+    createdAt: user.createdAt,
+    inviteCode: user.inviteCode,
+  };
+  localStorage.setItem(AUTH_KEY, JSON.stringify(localUser));
 
   // 处理邀请奖励
   if (inviteCode) {
     addRewardCredits(5);
-
-    // 记录邀请
-    await s.from('invitations').insert({
-      invitee_email: email,
-      invite_code: inviteCode,
-    });
   }
 
   return { success: true };
 }
 
-export async function signIn(email: string, password: string) {
-  const s = await getSupabase();
-  const { data, error } = await s.auth.signInWithPassword({
-    email,
-    password,
-  });
+export async function signIn(
+  email: string,
+  password: string
+): Promise<{ success: boolean; error?: string }> {
+  const users = getUserDB();
+  const user = users.find(
+    (u) => u.email === email && u.passwordHash === simpleHash(password)
+  );
 
-  if (error) return { success: false, error: error.message };
-  if (!data.user) return { success: false, error: '登录失败' };
+  if (!user) {
+    return { success: false, error: '邮箱或密码错误' };
+  }
+
+  const localUser: LocalUser = {
+    email: user.email,
+    userId: user.userId,
+    createdAt: user.createdAt,
+    inviteCode: user.inviteCode,
+  };
+  localStorage.setItem(AUTH_KEY, JSON.stringify(localUser));
 
   return { success: true };
 }
 
-export async function signOut() {
-  const s = await getSupabase();
-  await s.auth.signOut();
-  localStorage.removeItem('jianjing_user');
+export async function signOut(): Promise<void> {
+  localStorage.removeItem(AUTH_KEY);
 }
 
 export function isLoggedIn(): boolean {
-  // 客户端检查
   try {
-    const user = localStorage.getItem('jianjing_user');
+    const user = localStorage.getItem(AUTH_KEY);
     return !!user;
   } catch {
     return false;
