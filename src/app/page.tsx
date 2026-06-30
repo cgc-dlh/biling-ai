@@ -310,7 +310,7 @@ export default function Home() {
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
             { icon: 'SEO分析', title: 'SEO智能分析', desc: '关键词密度+可读性评估', href: '/seo', accent: 'var(--teal)' },
-            { icon: '内容优化', title: '多平台适配', desc: '一篇变9平台版本', href: '/optimize', accent: 'var(--teal-glow)' },
+            { icon: '内容优化', title: '多平台适配', desc: '一篇变17平台版本', href: '/optimize', accent: 'var(--teal-glow)' },
             { icon: '实验室', title: '爆款实验室', desc: '收藏+排行+对比', href: '/lab', accent: 'var(--gold)' },
           ].map((f) => (
             <Link
