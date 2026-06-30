@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { loadTrendingTitles, type TrendingTitle } from '@/lib/trending';
 
 interface Favorite {
   title: string;
@@ -12,20 +13,6 @@ interface Favorite {
 }
 
 const LAB_KEY = 'jianjing_lab_favorites';
-
-// 匿名共享的热门标题（模拟云端数据）
-const TRENDING_TITLES = [
-  { title: '震惊！这个AI工具让内容创作者效率翻了10倍', score: 96, platform: '公众号', style: '悬念型', shares: 1234 },
-  { title: '2026年最值得关注的10个AI写作工具', score: 94, platform: '知乎', style: '数字型', shares: 987 },
-  { title: '我靠这个工具月入3万，今天坦白局', score: 92, platform: '小红书', style: '故事型', shares: 876 },
-  { title: '别再手动写标题了！AI一键生成100个高点击率标题', score: 91, platform: '头条', style: '痛点型', shares: 765 },
-  { title: '从0到10万粉，我只做对了这一件事', score: 90, platform: '公众号', style: '故事型', shares: 654 },
-  { title: '90%的人都不知道的内容写作技巧', score: 89, platform: '知乎', style: '数字型', shares: 543 },
-  { title: '这个AI工具，让我从文案小白变成爆款制造机', score: 88, platform: '小红书', style: '对比型', shares: 432 },
-  { title: '看完这篇，你的内容阅读量至少翻3倍', score: 87, platform: '头条', style: '数字型', shares: 321 },
-  { title: '后悔没有早点知道的标题写作秘籍', score: 86, platform: '公众号', style: '痛点型', shares: 298 },
-  { title: 'AI写标题 vs 人工写标题，差距居然这么大', score: 85, platform: '知乎', style: '对比型', shares: 267 },
-];
 
 function loadFavorites(): Favorite[] {
   try { return JSON.parse(localStorage.getItem(LAB_KEY) || '[]'); } catch { return []; }
@@ -44,10 +31,22 @@ export default function LabPage() {
   const [newPlatform, setNewPlatform] = useState('公众号');
   const [newStyle, setNewStyle] = useState('综合型');
   const [showForm, setShowForm] = useState(false);
+  const [trending, setTrending] = useState<TrendingTitle[]>([]);
+  const [loadingTrending, setLoadingTrending] = useState(false);
 
   useEffect(() => {
     setFavorites(loadFavorites());
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'trending') {
+      setLoadingTrending(true);
+      loadTrendingTitles().then(data => {
+        setTrending(data);
+        setLoadingTrending(false);
+      });
+    }
+  }, [activeTab]);
 
   const sorted = sortBy === 'score'
     ? [...favorites].sort((a, b) => b.score - a.score)
@@ -294,29 +293,38 @@ export default function LabPage() {
         {/* 热门排行 */}
         {activeTab === 'trending' && (
           <div className="space-y-3">
-            {TRENDING_TITLES.map((t, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-4 p-4 rounded-xl"
-                style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }}
-              >
-                <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg" style={{ color: i < 3 ? '#FFD700' : getScoreColor(t.score), background: 'var(--ocean-deep)', border: '1px solid var(--border-subtle)' }}>
-                  {i + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium" style={{ color: 'var(--ink)' }}>{t.title}</p>
-                  <div className="flex gap-2 mt-1">
-                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(45,212,191,0.1)', color: 'var(--teal)' }}>{t.platform}</span>
-                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(245,158,11,0.1)', color: '#F59E0B' }}>{t.style}</span>
-                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(139,92,246,0.1)', color: '#8B5CF6' }}>🔥 {t.shares} 分享</span>
-                  </div>
-                </div>
-                <span className="text-sm font-bold flex-shrink-0" style={{ color: getScoreColor(t.score) }}>{t.score}分</span>
+            {loadingTrending ? (
+              <div className="text-center py-12">
+                <div className="inline-block w-8 h-8 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
+                <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>加载热门数据中...</p>
               </div>
-            ))}
-            <div className="mt-6 text-center">
-              <p className="text-xs" style={{ color: 'var(--muted)' }}>数据来源：见鲸用户匿名共享 · 实时更新</p>
-            </div>
+            ) : (
+              <>
+                {trending.map((t, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 p-4 rounded-xl"
+                    style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }}
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg" style={{ color: i < 3 ? '#FFD700' : getScoreColor(t.score), background: 'var(--ocean-deep)', border: '1px solid var(--border-subtle)' }}>
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium" style={{ color: 'var(--ink)' }}>{t.title}</p>
+                      <div className="flex gap-2 mt-1">
+                        <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(45,212,191,0.1)', color: 'var(--teal)' }}>{t.platform}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(245,158,11,0.1)', color: '#F59E0B' }}>{t.style}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(139,92,246,0.1)', color: '#8B5CF6' }}>🔥 {t.shares} 分享</span>
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold flex-shrink-0" style={{ color: getScoreColor(t.score) }}>{t.score}分</span>
+                  </div>
+                ))}
+                <div className="mt-6 text-center">
+                  <p className="text-xs" style={{ color: 'var(--muted)' }}>数据来源：见鲸用户匿名共享 · 实时更新</p>
+                </div>
+              </>
+            )}
           </div>
         )}
       </main>
