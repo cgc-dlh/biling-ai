@@ -9,6 +9,8 @@ import WelcomeGuide from '@/components/WelcomeGuide';
 interface Title {
   title: string;
   score: number;
+  platform?: string;
+  style?: string;
 }
 
 const STYLE_OPTIONS = [
@@ -19,6 +21,12 @@ const STYLE_OPTIONS = [
   { value: 'story', label: '故事型', desc: '用故事引发共鸣' },
   { value: 'compare', label: '对比型', desc: '前后对比制造冲击' },
 ];
+
+const STYLE_LABEL_MAP: Record<string, string> = {
+  all: '综合型', suspense: '悬念型', number: '数字型', pain: '痛点型', story: '故事型', compare: '对比型',
+};
+
+const PLATFORM_OPTIONS = ['公众号', '小红书', '知乎', '头条', 'B站', '微博', '抖音', '快手', 'Medium', 'Instagram', 'LinkedIn', 'TikTok', 'YouTube', 'Twitter', 'Reddit', 'Facebook', 'Quora'];
 
 // localStorage key
 const LAB_KEY = 'jianjing_lab_favorites';
@@ -40,6 +48,9 @@ export default function Home() {
   const [error, setError] = useState('');
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [favorites, setFavorites] = useState<Title[]>([]);
+  const [favChoice, setFavChoice] = useState<{title: string, score: number} | null>(null);
+  const [favPlatform, setFavPlatform] = useState('公众号');
+  const [favStyle, setFavStyle] = useState(style);
   const contentRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => { setFavorites(loadFavorites()); }, []);
@@ -48,13 +59,32 @@ export default function Home() {
     return favorites.some(f => f.title === t.title);
   }, [favorites]);
 
-  const toggleFav = useCallback((t: Title) => {
-    const next = isFaved(t)
-      ? favorites.filter(f => f.title !== t.title)
-      : [...favorites, t];
+  const toggleFavPrompt = useCallback((t: Title) => {
+    if (isFaved(t)) {
+      // 取消收藏
+      const next = favorites.filter(f => f.title !== t.title);
+      setFavorites(next);
+      saveFavorites(next);
+    } else {
+      // 弹出选择平台和风格
+      setFavChoice(t);
+      setFavPlatform('公众号');
+      setFavStyle(style);
+    }
+  }, [favorites, isFaved, style]);
+
+  const confirmFavorite = () => {
+    if (!favChoice) return;
+    const newFav: Title = {
+      ...favChoice,
+      platform: PLATFORM_OPTIONS[PLATFORM_OPTIONS.indexOf(favPlatform) % PLATFORM_OPTIONS.length],
+      style: STYLE_LABEL_MAP[favStyle] || '综合型',
+    };
+    const next = [...favorites, newFav];
     setFavorites(next);
     saveFavorites(next);
-  }, [favorites, isFaved]);
+    setFavChoice(null);
+  };
 
   const handleGenerate = async () => {
     if (content.trim().length < 10) {
@@ -273,7 +303,7 @@ export default function Home() {
                       {t.score}分
                     </span>
                     <button
-                      onClick={() => toggleFav(t)}
+                      onClick={() => toggleFavPrompt(t)}
                       className="px-2 py-1 text-sm rounded-lg transition-colors"
                       style={{ color: isFaved(t) ? 'var(--gold)' : 'var(--muted)' }}
                       title={isFaved(t) ? '取消收藏' : '收藏到实验室'}
@@ -303,6 +333,44 @@ export default function Home() {
             >
               {copiedIdx === -1 ? '已复制全部标题' : '一键复制全部标题'}
             </button>
+          </div>
+        )}
+
+        {/* 收藏弹窗 */}
+        {favChoice && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={() => setFavChoice(null)}>
+            <div className="w-full max-w-sm rounded-2xl p-6" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }} onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-bold mb-3" style={{ color: 'var(--ink)' }}>⭐ 收藏标题到实验室</h3>
+              <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--ink)' }}>{favChoice.title}</p>
+              <div className="space-y-3 mb-4">
+                <div>
+                  <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--muted)' }}>目标平台</label>
+                  <select
+                    value={favPlatform}
+                    onChange={e => setFavPlatform(e.target.value)}
+                    className="w-full p-2 rounded-lg text-sm"
+                    style={{ background: 'var(--ocean-deep)', border: '1px solid var(--border-subtle)', color: 'var(--ink)' }}
+                  >
+                    {PLATFORM_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium mb-1 block" style={{ color: 'var(--muted)' }}>标题风格</label>
+                  <select
+                    value={favStyle}
+                    onChange={e => setFavStyle(e.target.value)}
+                    className="w-full p-2 rounded-lg text-sm"
+                    style={{ background: 'var(--ocean-deep)', border: '1px solid var(--border-subtle)', color: 'var(--ink)' }}
+                  >
+                    {STYLE_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={confirmFavorite} className="flex-1 py-2 rounded-lg text-sm font-medium" style={{ background: 'var(--teal)', color: '#0A1929' }}>确认收藏</button>
+                <button onClick={() => setFavChoice(null)} className="px-4 py-2 rounded-lg text-sm" style={{ color: 'var(--muted)', background: 'transparent' }}>取消</button>
+              </div>
+            </div>
           </div>
         )}
 
