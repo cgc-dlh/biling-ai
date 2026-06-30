@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export async function updateSession(request: NextRequest) {
+export function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -31,7 +31,7 @@ export async function updateSession(request: NextRequest) {
   // Do not run code between createServerClient and
   // supabase.auth.getUser(). A simpler alternative is to not use
   // a middleware file in the src/middleware.ts file.
-  await supabase.auth.getUser()
+  supabase.auth.getUser()
 
   return supabaseResponse
 }

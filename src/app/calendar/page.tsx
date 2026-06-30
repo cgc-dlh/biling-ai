@@ -182,7 +182,7 @@ export default function CalendarPage() {
 
   const addPlan = (d: number) => {
     if (!newTitle.trim()) return;
-    const next: Plan = [...plans, {
+    const next: Plan[] = [...plans, {
       date: dateStr(d),
       title: newTitle.trim(),
       platform: newPlatform,
@@ -198,7 +198,12 @@ export default function CalendarPage() {
   };
 
   const toggleStatus = (idx: number) => {
-    const next = plans.map((p, i) => i === idx ? { ...p, status: p.status === 'done' ? 'pending' : 'done' } : p);
+    const next = plans.map((p, i) => {
+      if (i === idx) {
+        return { ...p, status: p.status === 'done' ? ('pending' as const) : ('done' as const) };
+      }
+      return p;
+    });
     setPlans(next);
     savePlans(next);
   };
@@ -445,17 +450,22 @@ export default function CalendarPage() {
                   <div className="space-y-2">
                     <button
                       onClick={() => {
-                        // AI 自动生成一周发布计划
+                        // AI 自动生成下周发布计划
                         const today = NOW.getDate();
+                        const month = NOW.getMonth();
+                        const year = NOW.getFullYear();
                         const platforms = ['wechat', 'xiaohongshu', 'zhihu'];
                         const titles = ['AI工具测评', '行业洞察', '实操教程', '热点解读', '干货分享'];
                         const newPlans: Plan[] = [];
                         for (let i = 1; i <= 7; i++) {
-                          const day = today + i;
+                          const currentDate = new Date(year, month, today + i);
+                          const day = currentDate.getDate();
+                          const m = currentDate.getMonth() + 1;
+                          const y = currentDate.getFullYear();
                           const platform = platforms[i % platforms.length];
                           const title = titles[i % titles.length];
                           newPlans.push({
-                            date: `${NOW.getFullYear()}-${String(NOW.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`,
+                            date: `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`,
                             title: `${title} #${i}`,
                             platform,
                             content_type: 'article',

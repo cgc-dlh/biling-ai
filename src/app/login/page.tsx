@@ -23,8 +23,12 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    const user = getCurrentUser();
-    if (user) router.push('/');
+    // getCurrentUser 现在是异步函数
+    const checkUser = async () => {
+      const user = await getCurrentUser();
+      if (user) router.push('/');
+    };
+    checkUser();
     if (inviteCode) setIsSignUp(true);
   }, [router, inviteCode]);
 
@@ -36,7 +40,7 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        const result = signUp(email, password, inviteCode || undefined);
+        const result = await signUp(email, password, inviteCode || undefined);
         if (!result.success) {
           setError(result.error || '注册失败');
         } else {
@@ -44,7 +48,7 @@ export default function LoginPage() {
           setTimeout(() => router.push('/'), 1000);
         }
       } else {
-        const result = signIn(email, password);
+        const result = await signIn(email, password);
         if (!result.success) {
           setError(result.error || '登录失败');
         } else {

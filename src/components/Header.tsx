@@ -24,14 +24,17 @@ export default function Header({ current = '/' }: { current?: string }) {
   const router = useRouter();
 
   useEffect(() => {
-    const user = getCurrentUser();
-    if (user) {
-      setUserEmail(user.email);
-    }
+    const checkUser = async () => {
+      const user = await getCurrentUser();
+      if (user) {
+        setUserEmail(user.email);
+      }
+    };
+    checkUser();
   }, []);
 
-  const handleLogout = () => {
-    signOut();
+  const handleLogout = async () => {
+    await signOut();
     setUserEmail(null);
     router.refresh();
   };
