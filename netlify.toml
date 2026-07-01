@@ -1,6 +1,5 @@
 [build]
-  # Force rebuild cache invalidation v2
-  command = "rm -rf .next && export SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL && export SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY && npm run build"
+  command = "npm run build"
   publish = ".next"
 
 [build.environment]
