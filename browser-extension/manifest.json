@@ -1,17 +1,26 @@
 {
   "manifest_version": 3,
   "name": "见鲸 - AI智能内容优化",
-  "version": "1.0.0",
-  "description": "在任何网站选中文本，右键即可用见鲸AI优化内容",
+  "version": "1.1.0",
+  "description": "在任何网站选中文本，右键即可用见鲸AI优化内容、生成标题、分析SEO",
   "permissions": [
     "contextMenus",
     "clipboardWrite",
-    "storage"
+    "storage",
+    "activeTab"
   ],
   "host_permissions": [
     "https://golden-gingersnap-790cb7.netlify.app/*",
     "https://jianjing.app/*"
   ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
   "background": {
     "service_worker": "background.js"
   },

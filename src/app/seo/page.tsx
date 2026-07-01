@@ -24,6 +24,8 @@ export default function SEOPage() {
   const [keyword, setKeyword] = useState('');
   const [report, setReport] = useState<SEOReport | null>(null);
   const [loading, setLoading] = useState(false);
+  const [copying, setCopying] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
 
   const handleAnalyze = async () => {
@@ -55,6 +57,41 @@ export default function SEOPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCopyReport = async () => {
+    if (!report) return;
+    setCopying(true);
+    const text = [
+      `SEO综合评分: ${report.overallScore}/100`,
+      `关键词密度: ${report.keywordDensity} (${report.keywordDensityScore})`,
+      `可读性评分: ${report.readabilityScore} (${report.readabilityLevel})`,
+      `长尾词覆盖: ${report.longTailCoverage}/${report.longTailTotal}`,
+      `内链建议: ${report.internalLinks}条 (${report.internalLinksSuggestion})`,
+      `标题优化: ${report.titleOptimization}`,
+      `Meta描述建议: ${report.metaDescription}`,
+      '',
+      '优化建议:',
+      ...report.suggestions.map((s, i) => `${i + 1}. ${s}`),
+    ].join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    setCopying(false);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleReset = () => {
+    setReport(null);
+    setError('');
   };
 
   const levelMap: Record<string, string> = {
@@ -107,6 +144,37 @@ export default function SEOPage() {
 
         {report && (
           <div className="space-y-4">
+            {/* 操作按钮 */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleCopyReport}
+                disabled={copying}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)', color: 'var(--teal)' }}
+              >
+                {copying ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    复制中...
+                  </>
+                ) : copied ? (
+                  '已复制报告'
+                ) : (
+                  '复制报告'
+                )}
+              </button>
+              <button
+                onClick={handleReset}
+                className="flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all"
+                style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)', color: 'var(--muted)' }}
+              >
+                重新分析
+              </button>
+            </div>
+
             <div className="rounded-2xl p-6 text-center" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }}>
               <div className="text-5xl font-extrabold mb-2" style={{ color: scoreColor(report.overallScore) }}>{report.overallScore}<span className="text-xl font-normal" style={{ color: 'var(--muted)' }}>/100</span></div>
               <div className="text-sm" style={{ color: 'var(--muted)' }}>SEO综合评分</div>

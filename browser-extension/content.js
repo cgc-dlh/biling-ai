@@ -86,29 +86,18 @@ function togglePopup(message) {
       copyBtn.style.display = 'none';
 
       try {
-        // 调用见鲸 API
         let apiEndpoint = '';
         let requestBody = {};
 
         if (type === 'title') {
           apiEndpoint = '/api/generate-titles';
-          requestBody = {
-            content: message.text,
-            styles: ['综合型'],
-            count: 3
-          };
+          requestBody = { content: message.text, count: 5, style: 'all' };
         } else if (type === 'seo') {
           apiEndpoint = '/api/analyze-seo';
-          requestBody = {
-            content: message.text,
-            keyword: ''
-          };
+          requestBody = { content: message.text, keyword: '' };
         } else if (type === 'optimize') {
           apiEndpoint = '/api/optimize-content';
-          requestBody = {
-            content: message.text,
-            platforms: ['公众号']
-          };
+          requestBody = { content: message.text, platform: 'wechat', action: 'adapt' };
         }
 
         const response = await fetch('https://golden-gingersnap-790cb7.netlify.app' + apiEndpoint, {
@@ -119,17 +108,18 @@ function togglePopup(message) {
 
         const data = await response.json();
 
-        if (data.success) {
-          if (type === 'title') {
-            resultDiv.textContent = data.data.titles.map((t, i) => `${i + 1}. ${t.title} (${t.score}分)`).join('\n');
-          } else if (type === 'seo') {
-            resultDiv.textContent = `综合评分: ${data.data.overallScore}/100\n\n${data.data.suggestions.join('\n')}`;
-          } else if (type === 'optimize') {
-            resultDiv.textContent = data.data.optimizedContent;
-          }
+        if (type === 'title') {
+          const titles = data.titles || [];
+          resultDiv.textContent = titles.map((t, i) => `${i+1}. ${t.title} (${t.score}分)`).join('\n');
+          copyBtn.style.display = titles.length > 0 ? 'block' : 'none';
+        } else if (type === 'seo') {
+          const report = data.report || data;
+          resultDiv.textContent = `综合评分: ${report.overallScore || 0}/100\n关键词密度: ${report.keywordDensity || 'N/A'}\n可读性: ${report.readability || 'N/A'}\n\n${(report.suggestions || []).join('\n')}`;
           copyBtn.style.display = 'block';
-        } else {
-          resultDiv.textContent = '❌ ' + (data.error || '处理失败');
+        } else if (type === 'optimize') {
+          const optimized = data.content || data.optimizedContent || '';
+          resultDiv.textContent = optimized;
+          copyBtn.style.display = optimized ? 'block' : 'none';
         }
       } catch (err) {
         resultDiv.textContent = '❌ 网络错误: ' + err.message;

@@ -51,6 +51,7 @@ export default function Home() {
   const [favChoice, setFavChoice] = useState<{title: string, score: number} | null>(null);
   const [favPlatform, setFavPlatform] = useState('公众号');
   const [favStyle, setFavStyle] = useState(style);
+  const [demoLoading, setDemoLoading] = useState(false);
   const contentRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => { setFavorites(loadFavorites()); }, []);
@@ -164,6 +165,7 @@ export default function Home() {
               const demo = '做了3年自媒体，我终于摸索出一套内容创作方法论。从选题、标题到发布，每个环节都有技巧。选题要追热点也要有积累，标题要有悬念也要真实，多平台发布要适配各平台风格。今天全部分享给大家。';
               setContent(demo);
               setError('');
+              setDemoLoading(true);
               setLoading(true);
               setTitles([]);
               try {
@@ -176,17 +178,28 @@ export default function Home() {
                 const data = await res.json();
                 if (!res.ok) setError(data.error || '生成失败');
                 else setTitles(data.titles || []);
-              } catch { setError('网络错误'); }
-              finally { setLoading(false); }
+              } catch { setError('网络错误，请检查网络后重试'); }
+              finally { setLoading(false); setDemoLoading(false); }
               setTimeout(() => {
                 const el = document.querySelector('textarea');
                 if (el) el.focus();
               }, 500);
             }}
-            className="px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105"
+            disabled={demoLoading || loading}
+            className="px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2"
             style={{ background: 'linear-gradient(135deg, var(--gold), #F97316)', color: '#0A1929' }}
           >
-            一键体验 · 立看效果
+            {demoLoading ? (
+              <>
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                体验中...
+              </>
+            ) : (
+              '一键体验 · 立看效果'
+            )}
           </button>
         </div>
 

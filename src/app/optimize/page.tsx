@@ -41,6 +41,16 @@ interface PlatformResult {
 const CN_PLATFORMS = ALL_PLATFORM_OPTIONS.filter(p => p.region === 'cn');
 const GLOBAL_PLATFORMS = ALL_PLATFORM_OPTIONS.filter(p => p.region === 'global');
 
+// Loading spinner SVG component
+function Spinner({ className = '' }: { className?: string }) {
+  return (
+    <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+    </svg>
+  );
+}
+
 export default function OptimizePage() {
   const [content, setContent] = useState('');
   const [platform, setPlatform] = useState('wechat');
@@ -153,8 +163,8 @@ export default function OptimizePage() {
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold mb-2" style={{ color: 'var(--ink)' }}>Content Optimizer</h1>
-          <p style={{ color: 'var(--muted)' }}>One post → 17 platforms. AI auto-detects language and style</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold mb-2" style={{ color: 'var(--ink)' }}>内容优化</h1>
+          <p style={{ color: 'var(--muted)' }}>一篇内容 → 17个平台。AI自动检测语言和风格</p>
         </div>
 
         <div className="rounded-2xl p-6 mb-6" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
@@ -171,7 +181,7 @@ export default function OptimizePage() {
                   border: '1px solid var(--border-subtle)',
                 }}
               >
-                {a === 'adapt' ? 'Single Platform' : a === 'proofread' ? 'Proofread' : 'Batch All'}
+                {a === 'adapt' ? '单平台优化' : a === 'proofread' ? '智能审校' : '批量生成'}
               </button>
             ))}
           </div>
@@ -200,7 +210,7 @@ export default function OptimizePage() {
                     border: `1px solid ${platformRegion === 'global' ? 'var(--teal)' : 'var(--border-subtle)'}`,
                   }}
                 >
-                  Global
+                  海外市场
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -246,13 +256,13 @@ export default function OptimizePage() {
                     border: `1px solid ${platformRegion === 'global' ? 'var(--teal)' : 'var(--border-subtle)'}`,
                   }}
                 >
-                  Global (9)
+                  海外市场 (9)
                 </button>
               </div>
               <div className="flex items-center gap-2 mb-2">
-                <button onClick={selectAllInRegion} className="text-xs px-2 py-1 rounded" style={{ color: 'var(--teal)', border: '1px solid var(--border-subtle)' }}>Select All</button>
-                <button onClick={deselectAllPlatforms} className="text-xs px-2 py-1 rounded" style={{ color: 'var(--muted)', border: '1px solid var(--border-subtle)' }}>Clear</button>
-                <span className="text-xs" style={{ color: 'var(--muted)' }}>{batchPlatforms.size}/{ALL_PLATFORM_OPTIONS.length} selected</span>
+                <button onClick={selectAllInRegion} className="text-xs px-2 py-1 rounded" style={{ color: 'var(--teal)', border: '1px solid var(--border-subtle)' }}>全选</button>
+                <button onClick={deselectAllPlatforms} className="text-xs px-2 py-1 rounded" style={{ color: 'var(--muted)', border: '1px solid var(--border-subtle)' }}>清空</button>
+                <span className="text-xs" style={{ color: 'var(--muted)' }}>已选 {batchPlatforms.size}/{ALL_PLATFORM_OPTIONS.length} 个平台</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {activePlatformList.map(p => {
@@ -277,12 +287,12 @@ export default function OptimizePage() {
           )}
 
           <label className="text-sm font-semibold block mb-2" style={{ color: 'var(--ink)' }}>
-            {action === 'proofread' ? 'Paste content to proofread' : 'Paste original content'}
+            {action === 'proofread' ? '粘贴需要审校的内容' : '粘贴原始内容'}
           </label>
           <textarea
             value={content}
             onChange={(e) => { setContent(e.target.value); setError(''); }}
-            placeholder={action === 'batch' ? 'Paste one post → generate for N platforms (CN or Global)...' : action === 'adapt' ? 'Paste your content. AI auto-detects language and adapts...' : 'Paste content to proofread...'}
+            placeholder={action === 'batch' ? '粘贴一篇内容 → 批量生成多个平台版本...' : action === 'adapt' ? '粘贴内容，AI将自动检测语言并适配...' : '粘贴需要审校的内容...'}
             className="w-full h-40 p-4 rounded-xl resize-none text-base"
             style={{ background: 'var(--ocean-deep)', border: '1px solid var(--border-subtle)', color: 'var(--ink)', outline: 'none' }}
           />
@@ -291,19 +301,21 @@ export default function OptimizePage() {
             <button
               onClick={handleBatchGenerate}
               disabled={batchRunning}
-              className="mt-4 w-full py-3 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="mt-4 w-full py-3 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
               style={{ background: batchRunning ? 'var(--ocean-surface)' : 'var(--gold)', color: batchRunning ? 'var(--muted)' : '#0A1929' }}
             >
-              {batchRunning ? `Generating... ${batchResults.filter(r => !r.loading).length}/${batchResults.length} platforms` : `Generate for ${batchPlatforms.size} platforms`}
+              {batchRunning && <Spinner className="w-4 h-4" />}
+              {batchRunning ? `生成中... ${batchResults.filter(r => !r.loading).length}/${batchResults.length} 个平台` : `为 ${batchPlatforms.size} 个平台生成`}
             </button>
           ) : (
             <button
               onClick={handleOptimize}
               disabled={loading}
-              className="mt-4 w-full py-3 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="mt-4 w-full py-3 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
               style={{ background: action === 'adapt' ? 'var(--teal)' : '#8B5CF6' }}
             >
-              {loading ? 'Processing...' : action === 'adapt' ? 'Optimize' : 'Proofread'}
+              {loading && <Spinner className="w-4 h-4" />}
+              {loading ? '处理中...' : action === 'adapt' ? '开始优化' : '智能审校'}
             </button>
           )}
           {error && <p className="mt-3 text-sm px-4 py-2 rounded-lg" style={{ color: '#EF4444', background: 'rgba(239,68,68,0.1)' }}>{error}</p>}
@@ -313,8 +325,8 @@ export default function OptimizePage() {
         {result && action === 'adapt' && (
           <div className="rounded-2xl p-6" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold" style={{ color: 'var(--ink)' }}>Result</h3>
-              <button onClick={() => handleCopy(result)} className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors" style={{ borderColor: 'var(--border-subtle)', color: 'var(--teal)' }}>{copied ? 'Copied' : 'Copy'}</button>
+              <h3 className="font-bold" style={{ color: 'var(--ink)' }}>结果</h3>
+              <button onClick={() => handleCopy(result)} className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors" style={{ borderColor: 'var(--border-subtle)', color: 'var(--teal)' }}>{copied ? '已复制' : '复制'}</button>
             </div>
             <div className="rounded-xl p-4 whitespace-pre-wrap leading-relaxed text-sm" style={{ background: 'var(--ocean-deep)', color: 'var(--ink)' }}>{result}</div>
           </div>
@@ -323,7 +335,7 @@ export default function OptimizePage() {
         {/* Batch results */}
         {batchResults.length > 0 && action === 'batch' && (
           <div className="rounded-2xl p-6" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="font-bold mb-3" style={{ color: 'var(--ink)' }}>Results</h3>
+            <h3 className="font-bold mb-3" style={{ color: 'var(--ink)' }}>批量结果</h3>
             <div className="flex flex-wrap gap-1 mb-4">
               {batchResults.map((r, i) => (
                 <button key={r.platform} onClick={() => setBatchActiveTab(i)} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1" style={{ background: batchActiveTab === i ? 'rgba(45,212,191,0.12)' : 'var(--ocean-deep)', color: batchActiveTab === i ? 'var(--teal)' : 'var(--muted)', border: `1px solid ${batchActiveTab === i ? 'var(--teal)' : 'var(--border-subtle)'}` }}>
@@ -333,11 +345,11 @@ export default function OptimizePage() {
             </div>
             {batchResults[batchActiveTab] && (
               <div>
-                {batchResults[batchActiveTab].loading ? <div className="text-center py-8" style={{ color: 'var(--muted)' }}>Generating...</div>
+                {batchResults[batchActiveTab].loading ? <div className="text-center py-8 flex items-center justify-center gap-2" style={{ color: 'var(--muted)' }}><Spinner className="w-4 h-4" /> 生成中...</div>
                 : batchResults[batchActiveTab].error ? <div className="text-center py-4" style={{ color: '#EF4444' }}>{batchResults[batchActiveTab].error}</div>
                 : (<>
                   <div className="rounded-xl p-4 whitespace-pre-wrap leading-relaxed text-sm mb-3" style={{ background: 'var(--ocean-deep)', color: 'var(--ink)' }}>{batchResults[batchActiveTab].content}</div>
-                  <button onClick={() => handleCopy(batchResults[batchActiveTab].content)} className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors" style={{ borderColor: 'var(--border-subtle)', color: 'var(--teal)' }}>Copy</button>
+                  <button onClick={() => handleCopy(batchResults[batchActiveTab].content)} className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors" style={{ borderColor: 'var(--border-subtle)', color: 'var(--teal)' }}>{copied ? '已复制' : '复制'}</button>
                 </>)}
               </div>
             )}
@@ -349,11 +361,11 @@ export default function OptimizePage() {
           <div className="space-y-4">
             <div className="rounded-2xl p-6 text-center" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }}>
               <span className="text-4xl font-extrabold" style={{ color: '#8B5CF6' }}>{proofreadResult.overallRating}</span>
-              <div className="text-sm mt-1" style={{ color: 'var(--muted)' }}>{proofreadResult.stats?.totalChars || 0} chars · {proofreadResult.stats?.errorCount || 0} errors · {proofreadResult.stats?.warningCount || 0} warnings</div>
+              <div className="text-sm mt-1" style={{ color: 'var(--muted)' }}>{proofreadResult.stats?.totalChars || 0} 字 · {proofreadResult.stats?.errorCount || 0} 个错误 · {proofreadResult.stats?.warningCount || 0} 个警告</div>
             </div>
             {proofreadResult.errors?.length > 0 && (
               <div className="rounded-2xl p-6" style={{ background: 'var(--ocean-surface)', border: '1px solid rgba(239,68,68,0.3)' }}>
-                <h3 className="font-bold mb-3" style={{ color: '#EF4444' }}>{proofreadResult.errors.length} errors</h3>
+                <h3 className="font-bold mb-3" style={{ color: '#EF4444' }}>{proofreadResult.errors.length} 个错误</h3>
                 {proofreadResult.errors.map((err, i) => (
                   <div key={i} className="flex items-start gap-3 py-2 text-sm" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <span className="font-medium whitespace-nowrap" style={{ color: '#EF4444' }}>{err.type}</span>
@@ -367,7 +379,7 @@ export default function OptimizePage() {
             )}
             {proofreadResult.warnings?.length > 0 && (
               <div className="rounded-2xl p-6" style={{ background: 'var(--ocean-surface)', border: '1px solid rgba(245,158,11,0.3)' }}>
-                <h3 className="font-bold mb-3" style={{ color: 'var(--gold)' }}>{proofreadResult.warnings.length} warnings</h3>
+                <h3 className="font-bold mb-3" style={{ color: 'var(--gold)' }}>{proofreadResult.warnings.length} 个警告</h3>
                 {proofreadResult.warnings.map((w, i) => (
                   <div key={i} className="flex items-center gap-2 py-1.5 text-sm" style={{ color: 'var(--ink)' }}>
                     <span style={{ color: 'var(--gold)' }}>▸</span>

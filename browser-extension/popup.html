@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { width: 360px; min-height: 400px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0A1929; color: #E2E8F0; }
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #1E3A5F; }
+    .logo { display: flex; align-items: center; gap: 8px; }
+    .logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, #2DD4BF, #0EA5E9); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .logo-text { font-weight: 700; font-size: 15px; color: #2DD4BF; }
+    .open-link { font-size: 11px; color: #64748B; text-decoration: none; }
+    .open-link:hover { color: #2DD4BF; }
+    .body { padding: 12px 16px; }
+    textarea { width: 100%; height: 100px; background: #153E5C; border: 1px solid #1E3A5F; border-radius: 8px; color: #E2E8F0; padding: 10px; font-size: 13px; resize: none; outline: none; font-family: inherit; }
+    textarea:focus { border-color: #2DD4BF; }
+    .btns { display: flex; gap: 6px; margin-top: 10px; }
+    .btn { flex: 1; padding: 8px 4px; border: 1px solid #1E3A5F; border-radius: 6px; background: #153E5C; color: #E2E8F0; cursor: pointer; font-size: 12px; text-align: center; transition: all 0.15s; }
+    .btn:hover { background: #1E3A5F; border-color: #2DD4BF; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result { margin-top: 10px; min-height: 80px; max-height: 200px; overflow-y: auto; background: #153E5C; border: 1px solid #1E3A5F; border-radius: 8px; padding: 10px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+    .result:empty::before { content: '点击上方按钮开始分析'; color: #64748B; }
+    .result.loading::before { content: '⏳ AI 处理中...'; }
+    .copy-btn { width: 100%; padding: 8px; margin-top: 8px; border: 1px solid #2DD4BF; border-radius: 6px; background: transparent; color: #2DD4BF; cursor: pointer; font-size: 12px; display: none; }
+    .copy-btn:hover { background: rgba(45,212,191,0.1); }
+    .footer { padding: 8px 16px; text-align: center; font-size: 10px; color: #64748B; }
+    .footer a { color: #2DD4BF; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">✏️</div>
+      <span class="logo-text">见鲸 AI</span>
+    </div>
+    <a href="https://golden-gingersnap-790cb7.netlify.app" target="_blank" class="open-link">打开主站 →</a>
+  </div>
+  <div class="body">
+    <textarea id="input" placeholder="在此粘贴或输入文本..."></textarea>
+    <div class="btns">
+      <button class="btn" id="btn-title">📝 生成标题</button>
+      <button class="btn" id="btn-seo">🔍 SEO分析</button>
+      <button class="btn" id="btn-optimize">✨ 内容优化</button>
+    </div>
+    <div class="result" id="result"></div>
+    <button class="copy-btn" id="copy">📋 复制结果</button>
+  </div>
+  <div class="footer">见鲸 — AI智能内容编辑 · <a href="https://golden-gingersnap-790cb7.netlify.app" target="_blank">jianjing.app</a></div>
+  <script src="popup.js"></script>
+</body>
+</html>

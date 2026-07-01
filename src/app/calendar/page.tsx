@@ -265,7 +265,7 @@ export default function CalendarPage() {
           <div className="lg:col-span-2">
             {/* 日历 */}
             <div className="rounded-2xl p-6 mb-6" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                 <button onClick={prevMonth} className="px-3 py-1 rounded-lg text-sm font-medium transition-colors" style={{ color: 'var(--muted)', border: '1px solid var(--border-subtle)' }}>← 上月</button>
                 <span className="text-lg font-bold" style={{ color: 'var(--ink)' }}>{year}年{month + 1}月</span>
                 <button onClick={nextMonth} className="px-3 py-1 rounded-lg text-sm font-medium transition-colors" style={{ color: 'var(--muted)', border: '1px solid var(--border-subtle)' }}>下月 →</button>
@@ -287,7 +287,7 @@ export default function CalendarPage() {
                   return (
                     <div
                       key={ds}
-                      className="relative rounded-lg p-1 text-center cursor-pointer transition-all min-h-[60px]"
+                      className="relative rounded-lg p-1 text-center cursor-pointer transition-all min-h-[40px] sm:min-h-[60px]"
                       style={{
                         background: isToday ? 'rgba(45,212,191,0.12)' : 'var(--ocean-deep)',
                         border: isToday ? '1px solid var(--teal)' : '1px solid transparent',
@@ -585,15 +585,39 @@ export default function CalendarPage() {
                   <div className="space-y-2">
                     <button
                       onClick={() => {
-                        // AI 自动生成下周发布计划
+                        // 一键生成下周发布计划
                         const today = NOW.getDate();
-                        const month = NOW.getMonth();
-                        const year = NOW.getFullYear();
+                        const currentMonth = NOW.getMonth();
+                        const currentYear = NOW.getFullYear();
                         const platforms = ['wechat', 'xiaohongshu', 'zhihu'];
-                        const titles = ['AI工具测评', '行业洞察', '实操教程', '热点解读', '干货分享'];
+                        const titles = ['工具测评', '行业洞察', '实操教程', '热点解读', '干货分享'];
+
+                        // 计算下周的日期范围
+                        const nextWeekDates: string[] = [];
+                        for (let i = 1; i <= 7; i++) {
+                          const currentDate = new Date(currentYear, currentMonth, today + i);
+                          const day = currentDate.getDate();
+                          const m = currentDate.getMonth() + 1;
+                          const y = currentDate.getFullYear();
+                          nextWeekDates.push(`${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`);
+                        }
+
+                        // 防重复检测：检查下周是否已有计划
+                        const existingNextWeekPlans = plans.filter(p => nextWeekDates.includes(p.date));
+                        if (existingNextWeekPlans.length > 0) {
+                          const overwrite = window.confirm(
+                            `下周已有 ${existingNextWeekPlans.length} 个发布计划。\n点击"确定"将追加新计划（不会覆盖已有计划），点击"取消"则放弃操作。`
+                          );
+                          if (!overwrite) return;
+                        } else {
+                          // 无计划时也需要确认
+                          const confirmed = window.confirm('将为您生成下周 7 天的发布计划，确认继续？');
+                          if (!confirmed) return;
+                        }
+
                         const newPlans: Plan[] = [];
                         for (let i = 1; i <= 7; i++) {
-                          const currentDate = new Date(year, month, today + i);
+                          const currentDate = new Date(currentYear, currentMonth, today + i);
                           const day = currentDate.getDate();
                           const m = currentDate.getMonth() + 1;
                           const y = currentDate.getFullYear();
@@ -613,7 +637,7 @@ export default function CalendarPage() {
                       className="w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors"
                       style={{ background: 'rgba(45,212,191,0.1)', color: 'var(--teal)', border: '1px solid var(--teal)' }}
                     >
-                      🤖 AI 自动生成下周计划
+                      一键生成下周计划
                     </button>
                     <button
                       onClick={() => router.push('/optimize')}

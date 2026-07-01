@@ -10,12 +10,20 @@ interface Favorite {
   score: number;
   platform: string;
   style: string;
+  savedAt?: number;
 }
 
 const LAB_KEY = 'jianjing_lab_favorites';
 
 function loadFavorites(): Favorite[] {
-  try { return JSON.parse(localStorage.getItem(LAB_KEY) || '[]'); } catch { return []; }
+  try {
+    const items: Favorite[] = JSON.parse(localStorage.getItem(LAB_KEY) || '[]');
+    // 给没有 savedAt 的旧数据补充递增时间戳，模拟保存顺序
+    items.forEach((item, i) => {
+      if (!item.savedAt) item.savedAt = Date.now() - (items.length - i);
+    });
+    return items;
+  } catch { return []; }
 }
 
 function saveFavorites(favs: Favorite[]) {
@@ -33,6 +41,8 @@ export default function LabPage() {
   const [showForm, setShowForm] = useState(false);
   const [trending, setTrending] = useState<TrendingTitle[]>([]);
   const [loadingTrending, setLoadingTrending] = useState(false);
+  const [toast, setToast] = useState<{message: string, type: 'success' | 'info'} | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{message: string, onConfirm: () => void} | null>(null);
 
   useEffect(() => {
     setFavorites(loadFavorites());
@@ -50,7 +60,7 @@ export default function LabPage() {
 
   const sorted = sortBy === 'score'
     ? [...favorites].sort((a, b) => b.score - a.score)
-    : favorites;
+    : [...favorites].sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
 
   const remove = (idx: number) => {
     const next = favorites.filter((_, i) => i !== idx);
@@ -59,10 +69,8 @@ export default function LabPage() {
   };
 
   const clearAll = () => {
-    if (confirm('确定清空所有收藏？')) {
-      setFavorites([]);
-      saveFavorites([]);
-    }
+    setFavorites([]);
+    saveFavorites([]);
   };
 
   const addManualTitle = () => {
@@ -72,6 +80,7 @@ export default function LabPage() {
       score: newScore,
       platform: newPlatform,
       style: newStyle,
+      savedAt: Date.now(),
     };
     const next = [fav, ...favorites];
     setFavorites(next);
@@ -92,7 +101,7 @@ export default function LabPage() {
       document.execCommand('copy');
       document.body.removeChild(ta);
     }
-    alert('已复制到剪贴板！');
+    setToast({message: '已复制到剪贴板', type: 'success'});
   };
 
   const getScoreColor = (score: number) => {
@@ -148,7 +157,7 @@ export default function LabPage() {
             ) : (
               <>
                 {/* Controls */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                   <div className="flex gap-2">
                     <button
                       onClick={() => setSortBy('score')}
@@ -181,7 +190,7 @@ export default function LabPage() {
                     + 手动添加
                   </button>
                   <button
-                    onClick={clearAll}
+                    onClick={() => setConfirmAction({message: '确定清空所有收藏？', onConfirm: clearAll})}
                     className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                     style={{ color: '#EF4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}
                   >
@@ -277,7 +286,7 @@ export default function LabPage() {
                       </div>
                       <span className="text-sm font-bold flex-shrink-0" style={{ color: getScoreColor(t.score) }}>{t.score}分</span>
                       <button onClick={() => shareTitle(t)} className="px-2 py-1 text-xs rounded-lg transition-colors flex-shrink-0" style={{ color: 'var(--muted)', border: '1px solid var(--border-subtle)' }} title="分享">分享</button>
-                      <button onClick={() => remove(i)} className="text-xs flex-shrink-0 px-2 py-1 rounded-lg transition-colors" style={{ color: '#EF4444' }}>删除</button>
+                      <button onClick={() => setConfirmAction({message: '确定删除这条收藏？', onConfirm: () => remove(i)})} className="text-xs flex-shrink-0 px-2 py-1 rounded-lg transition-colors" style={{ color: '#EF4444' }}>删除</button>
                     </div>
                   ))}
                 </div>
@@ -328,6 +337,26 @@ export default function LabPage() {
           </div>
         )}
       </main>
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg z-50 transition-opacity"
+          style={{ background: toast.type === 'success' ? '#10B981' : '#2DD4BF', color: '#0A1929' }}
+          onClick={() => setToast(null)}
+        >
+          {toast.message}
+        </div>
+      )}
+      {confirmAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={() => setConfirmAction(null)}>
+          <div className="w-full max-w-sm rounded-2xl p-6" style={{ background: 'var(--ocean-surface)', border: '1px solid var(--border-subtle)' }} onClick={e => e.stopPropagation()}>
+            <p className="text-sm mb-4" style={{ color: 'var(--ink)' }}>{confirmAction.message}</p>
+            <div className="flex gap-2">
+              <button onClick={() => { confirmAction.onConfirm(); setConfirmAction(null); }} className="flex-1 py-2 rounded-lg text-sm font-medium" style={{ background: 'var(--teal)', color: '#0A1929' }}>确认</button>
+              <button onClick={() => setConfirmAction(null)} className="px-4 py-2 rounded-lg text-sm" style={{ color: 'var(--muted)', background: 'transparent' }}>取消</button>
+            </div>
+          </div>
+        </div>
+      )}
       <Footer />
     </div>
   );
