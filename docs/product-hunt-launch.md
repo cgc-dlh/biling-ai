@@ -16,23 +16,21 @@
 
 > Hey Product Hunt! 👋
 >
-> I'm thrilled to launch JianJing — an AI content editor I built to solve my own struggle as a multi-platform creator.
+> I'm a solo creator who writes for WeChat, XHS, Medium, LinkedIn, and more every single week. If you've ever rewritten the same article five times just to match each platform's vibe, you know exactly why I built JianJing.
 >
-> Here's the problem: every platform has different title styles, optimal posting times, and audience expectations. I was spending hours tweaking the same piece of content for WeChat, XHS, Medium, and LinkedIn. JianJing automates that.
+> Most AI writing tools spit out generic drafts that still need hours of platform-specific tweaking. JianJing is different — it understands the *deep* rules of each platform: title length, emoji style, hook formulas, even optimal posting times. This isn't a generic AI writer; it's a platform-native optimization engine.
 >
-> **What it does:**
-> - Generate 100+ platform-optimized titles in seconds
+> **What you get:**
+> - 100+ platform-optimized titles in one click
 > - Real-time SEO scoring with actionable fixes
-> - AI content rewriting with brand voice matching
-> - Viral title lab with trending examples across platforms
-> - Smart content calendar with AI timing recommendations
-> - Browser extension for one-click analysis anywhere
+> - AI rewriting that matches your brand voice
+> - A viral title lab with real trending examples
+> - A smart content calendar with AI timing recommendations
+> - A browser extension for one-click analysis on any page
 >
-> **Built for:** Bloggers, social media managers, indie hackers, and anyone who creates content for multiple channels.
+> **Free to start.** No credit card, no trial countdown — just sign up and go.
 >
-> **Pricing:** Free tier with generous daily limits. No credit card required to start.
->
-> I'd love your feedback — especially on the title generator accuracy and which platforms you'd like us to add next. Thanks for checking it out! 🐋
+> I'd genuinely love your feedback: try the title generator for your favorite platform and tell me how accurate it feels. If it misses the mark, I want to know. Thanks for checking it out! 🐋
 
 ## Key Messages
 
@@ -52,14 +50,33 @@
 ## Launch Checklist
 
 - [x] Create Product Hunt product page
-- [x] Build launch landing page (/ph)
+- [x] Build launch landing page (/ph) — completed & optimized
 - [ ] Schedule launch for Tuesday 00:01 PST (July 15, 2026)
-- [ ] Prepare 5 high-quality screenshots/GIFs
+- [x] Prepare screenshots — CSS mockup displays added to /ph page
 - [ ] Write Maker comment
 - [ ] Notify email waitlist 24h before launch
 - [ ] Post on Twitter/X, LinkedIn, Reddit r/SideProject
 - [ ] Prepare thank-you reply templates
 - [ ] Monitor and respond to comments within first 4 hours
+- [x] 浏览器扩展完成（manifest v1.1.0 + popup.html + content.js修复）
+- [x] 认证系统迁移到localStorage
+- [x] 热门标题云端化
+- [x] 内容日历功能完善
+- [x] 全站体验优化（中英文统一、loading动画、移动端适配）
+
+## Pre-Launch Strategy
+
+- **1 week before:** Create the Product Hunt product page and start accumulating followers.
+- **3–5 days before:** Tease the launch on Twitter/X and LinkedIn with behind-the-scenes screenshots.
+- **24 hours before:** Send a heads-up email to the waitlist with the exact launch time.
+- **Day before:** Prepare reply templates for the first 4 hours of comments.
+
+## Post-Launch Action Plan
+
+- **First hour:** Reply to every single comment personally.
+- **First 4 hours:** Stay online, monitor the page, and keep engaging with new comments.
+- **Launch day:** Share on social media and thank every supporter publicly.
+- **Day 2:** Review analytics, collect qualitative feedback, and prioritize quick wins.
 
 ## Reply Templates
 
